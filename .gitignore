@@ -1,0 +1,21 @@
+# Assessment source files (not part of the deliverable repo)
+6d9dd663-6d99-41b9-83e9-0d8d90ca62b6.jpg
+47e77ecc-797b-4f7e-9455-ef98b7e806bb.jpg
+Technical Assessment.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Odoo
+*.log
+.odoorc
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
