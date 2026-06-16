@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root application menu. Sub-menus are attached per phase as models land. -->
+    <menuitem id="menu_fund_root"
+              name="Fund Management"
+              web_icon="nn_fund_management,static/description/icon.png"
+              sequence="15"/>
+</odoo>
