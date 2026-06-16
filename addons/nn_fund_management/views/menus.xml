@@ -15,6 +15,8 @@
               parent="menu_fund_operations" action="action_fund_allocation" sequence="20"/>
     <menuitem id="menu_fund_requisition" name="Requisitions"
               parent="menu_fund_operations" action="action_fund_requisition" sequence="30"/>
+    <menuitem id="menu_fund_bill" name="Bills"
+              parent="menu_fund_operations" action="action_fund_bill" sequence="40"/>
 
     <!-- Ledger -->
     <menuitem id="menu_fund_ledger" name="Ledger"

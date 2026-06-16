@@ -26,6 +26,8 @@ class FundRequisition(models.Model):
     attachment_ids = fields.Many2many("ir.attachment", string="Attachments")
 
     target_name = fields.Char(string="Target", compute="_compute_target_name")
+    bill_ids = fields.One2many("nn.fund.bill", "requisition_id", string="Bills")
+    bill_count = fields.Integer(compute="_compute_bill_count")
     remaining_billable = fields.Monetary(
         string="Remaining Billable", compute="_compute_remaining_billable", store=True,
         help="Approved amount still available to bill against.",
@@ -53,13 +55,31 @@ class FundRequisition(models.Model):
         for rec in self:
             rec.target_name = rec.project_id.display_name or rec.expense_head_id.display_name or ""
 
-    @api.depends("state", "amount")
+    @api.depends("state", "amount", "bill_ids.state", "bill_ids.amount")
     def _compute_remaining_billable(self):
-        # Phase 6 extends this to subtract billed amounts; until a bill exists
-        # the full approved amount is billable. Only an *approved* (not yet
-        # closed) requisition has anything left to bill.
+        # Only an *approved* (not yet closed) requisition has anything left to
+        # bill; posted bills consume the billable amount (BR-26/27).
         for rec in self:
-            rec.remaining_billable = rec.amount if rec.state == "approved" else 0.0
+            if rec.state == "approved":
+                billed = sum(b.amount for b in rec.bill_ids if b.state == "posted")
+                rec.remaining_billable = rec.amount - billed
+            else:
+                rec.remaining_billable = 0.0
+
+    def _compute_bill_count(self):
+        for rec in self:
+            rec.bill_count = len(rec.bill_ids)
+
+    def action_view_bills(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Bills"),
+            "res_model": "nn.fund.bill",
+            "view_mode": "tree,form",
+            "domain": [("requisition_id", "=", self.id)],
+            "context": {"default_requisition_id": self.id},
+        }
 
     @api.model_create_multi
     def create(self, vals_list):
