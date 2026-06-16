@@ -46,6 +46,7 @@ class IncomingFund(models.Model):
     def action_confirm(self):
         """Confirm a deposit -> post one immutable ``incoming`` ledger line so
         the amount enters the account's unassigned balance (BR-07)."""
+        self = self.with_context(mail_notify_force_send=False)
         for record in self:
             if record.state != "draft":
                 raise UserError(_("Only draft incoming funds can be confirmed."))

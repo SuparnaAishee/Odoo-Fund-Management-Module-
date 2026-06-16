@@ -81,6 +81,27 @@ class FundMovement(models.Model):
         ("amount_positive", "CHECK(amount > 0)", "A fund movement amount must be strictly positive."),
     ]
 
+    @api.model
+    def _post(self, move_type, amount, origin, account=False, project=False, expense_head=False):
+        """Single entry point for posting a ledger line. Runs as superuser
+        because the ledger is read-only to everyone (BR-18); the calling
+        workflow has already enforced its own access checks."""
+        company = origin.company_id if origin.company_id else self.env.company
+        currency = origin.currency_id if origin.currency_id else company.currency_id
+        return self.sudo().create({
+            "move_type": move_type,
+            "amount": amount,
+            "account_id": account.id if account else False,
+            "project_id": project.id if project else False,
+            "expense_head_id": expense_head.id if expense_head else False,
+            "currency_id": currency.id,
+            "company_id": company.id,
+            "origin_model": origin._name,
+            "origin_id": origin.id,
+            "reference": origin.display_name,
+            "state": origin.state if "state" in origin._fields else False,
+        })
+
     @api.depends("move_type", "amount", "reference")
     def _compute_display_name(self):
         type_label = dict(MOVE_TYPES)

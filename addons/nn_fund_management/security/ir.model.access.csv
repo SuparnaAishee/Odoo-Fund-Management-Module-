@@ -5,3 +5,4 @@ access_expense_head_user,expense.head.user,model_nn_expense_head,base.group_user
 access_incoming_fund_user,incoming.fund.user,model_nn_incoming_fund,base.group_user,1,1,1,1
 access_fund_movement_user,fund.movement.user,model_nn_fund_movement,base.group_user,1,0,0,0
 access_approval_line_user,approval.line.user,model_nn_approval_line,base.group_user,1,1,1,0
+access_fund_allocation_user,fund.allocation.user,model_nn_fund_allocation,base.group_user,1,1,1,1

@@ -145,6 +145,9 @@ class ApprovalMixin(models.AbstractModel):
     # Workflow actions
     # ------------------------------------------------------------------ #
     def action_submit(self):
+        # Queue tracking notifications rather than force-sending them, so the
+        # workflow never fails just because no outgoing mail server is set up.
+        self = self.with_context(mail_notify_force_send=False)
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("Only a draft request can be submitted."))
@@ -154,6 +157,7 @@ class ApprovalMixin(models.AbstractModel):
         return True
 
     def action_approve(self):
+        self = self.with_context(mail_notify_force_send=False)
         for rec in self:
             level = rec._current_level()
             if not level:
@@ -176,6 +180,7 @@ class ApprovalMixin(models.AbstractModel):
         return True
 
     def action_reject(self):
+        self = self.with_context(mail_notify_force_send=False)
         for rec in self:
             level = rec._current_level()
             if not level:
@@ -187,6 +192,7 @@ class ApprovalMixin(models.AbstractModel):
         return True
 
     def action_cancel(self):
+        self = self.with_context(mail_notify_force_send=False)
         for rec in self:
             if rec.state in ("approved", "rejected", "cancelled"):
                 raise UserError(_(
