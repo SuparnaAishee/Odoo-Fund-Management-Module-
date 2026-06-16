@@ -18,6 +18,7 @@ more than once. All balances are computed sums over an immutable ledger
     "license": "LGPL-3",
     "depends": ["base", "mail"],
     "data": [
+        "security/groups.xml",
         "security/ir.model.access.csv",
         "data/ir_sequence.xml",
         "data/expense_head_data.xml",
