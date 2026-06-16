@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_fund_movement_tree" model="ir.ui.view">
+        <field name="name">nn.fund.movement.tree</field>
+        <field name="model">nn.fund.movement</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="move_type"/>
+                <field name="reference"/>
+                <field name="account_id"/>
+                <field name="project_id"/>
+                <field name="expense_head_id"/>
+                <field name="amount" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_fund_movement_search" model="ir.ui.view">
+        <field name="name">nn.fund.movement.search</field>
+        <field name="model">nn.fund.movement</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="reference"/>
+                <field name="account_id"/>
+                <field name="project_id"/>
+                <field name="expense_head_id"/>
+                <filter name="incoming" string="Incoming" domain="[('move_type','=','incoming')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_type" string="Type" context="{'group_by':'move_type'}"/>
+                    <filter name="group_account" string="Account" context="{'group_by':'account_id'}"/>
+                    <filter name="group_project" string="Project" context="{'group_by':'project_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_fund_movement" model="ir.actions.act_window">
+        <field name="name">Fund Movements (Ledger)</field>
+        <field name="res_model">nn.fund.movement</field>
+        <field name="view_mode">tree</field>
+    </record>
+</odoo>

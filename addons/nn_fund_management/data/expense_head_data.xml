@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="expense_head_office_rent" model="nn.expense.head">
+        <field name="name">Office Rent</field>
+        <field name="code">RENT</field>
+    </record>
+    <record id="expense_head_salary" model="nn.expense.head">
+        <field name="name">Salary</field>
+        <field name="code">SAL</field>
+    </record>
+    <record id="expense_head_utilities" model="nn.expense.head">
+        <field name="name">Utilities</field>
+        <field name="code">UTIL</field>
+    </record>
+    <record id="expense_head_marketing" model="nn.expense.head">
+        <field name="name">Marketing</field>
+        <field name="code">MKT</field>
+    </record>
+    <record id="expense_head_admin" model="nn.expense.head">
+        <field name="name">Admin</field>
+        <field name="code">ADM</field>
+    </record>
+</odoo>

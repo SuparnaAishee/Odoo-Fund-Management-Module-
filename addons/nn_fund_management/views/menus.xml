@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Root application menu. Sub-menus are attached per phase as models land. -->
+    <!-- Root application menu -->
     <menuitem id="menu_fund_root"
               name="Fund Management"
               web_icon="nn_fund_management,static/description/icon.png"
               sequence="15"/>
+
+    <!-- Operations -->
+    <menuitem id="menu_fund_operations" name="Operations"
+              parent="menu_fund_root" sequence="10"/>
+    <menuitem id="menu_incoming_fund" name="Incoming Funds"
+              parent="menu_fund_operations" action="action_incoming_fund" sequence="10"/>
+
+    <!-- Ledger -->
+    <menuitem id="menu_fund_ledger" name="Ledger"
+              parent="menu_fund_root" sequence="80"/>
+    <menuitem id="menu_fund_movement" name="Fund Movements"
+              parent="menu_fund_ledger" action="action_fund_movement" sequence="10"/>
+
+    <!-- Configuration -->
+    <menuitem id="menu_fund_config" name="Configuration"
+              parent="menu_fund_root" sequence="90"/>
+    <menuitem id="menu_fund_account" name="Fund Accounts"
+              parent="menu_fund_config" action="action_fund_account" sequence="10"/>
+    <menuitem id="menu_project" name="Projects"
+              parent="menu_fund_config" action="action_project" sequence="20"/>
+    <menuitem id="menu_expense_head" name="Expense Heads"
+              parent="menu_fund_config" action="action_expense_head" sequence="30"/>
 </odoo>
