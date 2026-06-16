@@ -28,6 +28,7 @@ more than once. All balances are computed sums over an immutable ledger
         "views/expense_head_views.xml",
         "views/fund_movement_views.xml",
         "views/fund_allocation_views.xml",
+        "views/fund_requisition_views.xml",
         "views/menus.xml",
     ],
     "demo": [],
