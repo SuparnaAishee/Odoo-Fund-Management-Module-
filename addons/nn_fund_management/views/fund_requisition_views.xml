@@ -95,7 +95,7 @@
         <field name="name">nn.fund.requisition.kanban</field>
         <field name="model">nn.fund.requisition</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="state" class="o_kanban_small_column">
+            <kanban default_group_by="state" class="o_kanban_small_column o_nn_fund_kanban">
                 <field name="state"/>
                 <field name="amount"/>
                 <field name="remaining_billable"/>

@@ -1,0 +1,80 @@
+/* Modern visual layer for the Fund Management kanban boards.
+   Scoped to .o_nn_fund_kanban so the rest of Odoo is untouched. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.o_nn_fund_kanban {
+    font-family: 'Inter', -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /* Softer board background and roomier columns */
+    background: #f6f7f9;
+
+    .o_kanban_group {
+        background: transparent;
+
+        .o_kanban_header {
+            .o_kanban_counter,
+            .o_column_title {
+                font-weight: 600;
+                letter-spacing: .2px;
+                color: #3c4257;
+            }
+        }
+    }
+
+    /* The card itself */
+    .o_kanban_record {
+        padding: 0 !important;
+        margin-bottom: 12px;
+        border: 1px solid #eceef1 !important;
+        border-radius: 12px !important;
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, .06);
+        overflow: hidden;
+        transition: transform .15s ease, box-shadow .15s ease;
+
+        &:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(16, 24, 40, .12);
+        }
+
+        /* The coloured status stripe at the top */
+        .bg-success,
+        .bg-danger,
+        .bg-warning,
+        .bg-secondary {
+            height: 5px !important;
+        }
+
+        h4 {
+            font-weight: 700;
+            color: #101828;
+            letter-spacing: -.2px;
+        }
+
+        strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+            font-size: .82rem;
+        }
+
+        /* Pill-shaped, lighter action buttons */
+        .btn {
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: .78rem;
+            padding: .22rem .8rem;
+            box-shadow: none;
+        }
+
+        .badge {
+            border-radius: 999px;
+            font-weight: 600;
+            padding: .3em .7em;
+        }
+    }
+}
