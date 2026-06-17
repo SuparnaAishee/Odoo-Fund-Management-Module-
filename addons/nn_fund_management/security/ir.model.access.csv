@@ -40,3 +40,8 @@ access_transfer_fund_user,transfer.fund.user,model_nn_fund_transfer,group_fund_u
 access_transfer_gm,transfer.gm,model_nn_fund_transfer,group_gm_approver,1,0,0,0
 access_transfer_md,transfer.md,model_nn_fund_transfer,group_md_approver,1,0,0,0
 access_transfer_admin,transfer.admin,model_nn_fund_transfer,group_fund_admin,1,1,1,1
+access_dashboard_fund_user,dashboard.fund.user,model_nn_fund_dashboard,group_fund_user,1,0,0,0
+access_dashboard_finance,dashboard.finance,model_nn_fund_dashboard,group_finance_user,1,0,0,0
+access_dashboard_gm,dashboard.gm,model_nn_fund_dashboard,group_gm_approver,1,0,0,0
+access_dashboard_md,dashboard.md,model_nn_fund_dashboard,group_md_approver,1,0,0,0
+access_dashboard_admin,dashboard.admin,model_nn_fund_dashboard,group_fund_admin,1,1,1,1

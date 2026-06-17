@@ -23,6 +23,7 @@ more than once. All balances are computed sums over an immutable ledger
         "security/record_rules.xml",
         "data/ir_sequence.xml",
         "data/expense_head_data.xml",
+        "data/dashboard_data.xml",
         "views/fund_account_views.xml",
         "views/incoming_fund_views.xml",
         "views/project_views.xml",
@@ -32,6 +33,7 @@ more than once. All balances are computed sums over an immutable ledger
         "views/fund_requisition_views.xml",
         "views/fund_bill_views.xml",
         "views/fund_transfer_views.xml",
+        "views/fund_dashboard_views.xml",
         "views/menus.xml",
     ],
     "assets": {

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_fund_dashboard_form" model="ir.ui.view">
+        <field name="name">nn.fund.dashboard.form</field>
+        <field name="model">nn.fund.dashboard</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <sheet>
+                    <field name="currency_id" invisible="1"/>
+                    <div class="o_nn_fund_dashboard">
+                        <div class="o_dash_header">
+                            <h2>Fund Management Overview</h2>
+                            <span class="text-muted">Live balances computed from the ledger</span>
+                        </div>
+                        <div class="o_dash_grid">
+                            <div class="o_dash_card o_dash_blue">
+                                <div class="o_dash_label">Total Received</div>
+                                <div class="o_dash_value"><field name="total_received" widget="monetary"/></div>
+                            </div>
+                            <div class="o_dash_card o_dash_green">
+                                <div class="o_dash_label">Unassigned</div>
+                                <div class="o_dash_value"><field name="total_unassigned" widget="monetary"/></div>
+                            </div>
+                            <div class="o_dash_card o_dash_amber">
+                                <div class="o_dash_label">On Hold</div>
+                                <div class="o_dash_value"><field name="total_on_hold" widget="monetary"/></div>
+                            </div>
+                            <div class="o_dash_card o_dash_violet">
+                                <div class="o_dash_label">Assigned</div>
+                                <div class="o_dash_value"><field name="total_assigned" widget="monetary"/></div>
+                            </div>
+                            <div class="o_dash_card o_dash_red">
+                                <div class="o_dash_label">Spent</div>
+                                <div class="o_dash_value"><field name="total_spent" widget="monetary"/></div>
+                            </div>
+                            <div class="o_dash_card o_dash_slate">
+                                <div class="o_dash_label">Pending Approvals</div>
+                                <div class="o_dash_value"><field name="pending_approvals"/></div>
+                            </div>
+                        </div>
+                        <div class="o_dash_stats">
+                            <span class="o_dash_chip"><i class="fa fa-folder-o me-1" title="Projects"/><field name="project_count"/> Projects</span>
+                            <span class="o_dash_chip"><i class="fa fa-tags me-1" title="Expense heads"/><field name="expense_head_count"/> Expense Heads</span>
+                            <span class="o_dash_chip"><i class="fa fa-list me-1" title="Movements"/><field name="movement_count"/> Movements</span>
+                        </div>
+                        <div class="o_dash_actions">
+                            <button name="action_open_recent_movements" type="object" class="btn btn-primary">
+                                <i class="fa fa-list me-1" title="Movements"/>View Fund Movements
+                            </button>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fund_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard</field>
+        <field name="res_model">nn.fund.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="dashboard_overview"/>
+        <field name="target">current</field>
+    </record>
+</odoo>
