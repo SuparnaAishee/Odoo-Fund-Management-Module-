@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, AccessError
 
 
 class IncomingFund(models.Model):
@@ -46,6 +46,10 @@ class IncomingFund(models.Model):
     def action_confirm(self):
         """Confirm a deposit -> post one immutable ``incoming`` ledger line so
         the amount enters the account's unassigned balance (BR-07)."""
+        # BR-08 / BR-38: confirming a deposit is a Finance-only action, enforced
+        # server-side regardless of who can see the button.
+        if not self.env.user.has_group("nn_fund_management.group_finance_user"):
+            raise AccessError(_("Only Finance users may confirm incoming funds."))
         self = self.with_context(mail_notify_force_send=False)
         for record in self:
             if record.state != "draft":

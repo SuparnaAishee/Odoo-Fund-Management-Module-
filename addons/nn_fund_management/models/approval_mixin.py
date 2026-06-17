@@ -162,21 +162,26 @@ class ApprovalMixin(models.AbstractModel):
             level = rec._current_level()
             if not level:
                 raise UserError(_("This request is not awaiting approval."))
+            # Authorize as the *real* user (group + self-approval guards)...
             rec._check_approver(level)
-            rec._add_approval_line(level[0], "approved", self.env.context.get("approval_comment"))
+            # ...then perform the privileged writes with elevated rights, since
+            # an approver only holds read access to the document (BR-38). sudo()
+            # keeps the acting user, so the decision is still attributed to them.
+            rec_su = rec.sudo()
+            rec_su._add_approval_line(level[0], "approved", self.env.context.get("approval_comment"))
 
             levels = rec._approval_levels()
             codes = [lvl[0] for lvl in levels]
             idx = codes.index(level[0])
             if idx == len(levels) - 1:
                 # Final approver: post the money effect exactly once (BR-03).
-                if not rec.posted:
-                    rec._post_on_approve()
-                    rec.posted = True
-                rec.state = "approved"
+                if not rec_su.posted:
+                    rec_su._post_on_approve()
+                    rec_su.posted = True
+                rec_su.state = "approved"
             else:
                 # Advance to the state where the next level is the approver.
-                rec.state = levels[idx + 1][2]
+                rec_su.state = levels[idx + 1][2]
         return True
 
     def action_reject(self):
@@ -186,9 +191,10 @@ class ApprovalMixin(models.AbstractModel):
             if not level:
                 raise UserError(_("This request is not awaiting approval."))
             rec._check_approver(level)
-            rec._add_approval_line(level[0], "rejected", self.env.context.get("approval_comment"))
-            rec.state = "rejected"
-            rec._post_on_reject()
+            rec_su = rec.sudo()
+            rec_su._add_approval_line(level[0], "rejected", self.env.context.get("approval_comment"))
+            rec_su.state = "rejected"
+            rec_su._post_on_reject()
         return True
 
     def action_cancel(self):

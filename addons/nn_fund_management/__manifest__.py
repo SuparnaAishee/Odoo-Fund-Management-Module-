@@ -20,6 +20,7 @@ more than once. All balances are computed sums over an immutable ledger
     "data": [
         "security/groups.xml",
         "security/ir.model.access.csv",
+        "security/record_rules.xml",
         "data/ir_sequence.xml",
         "data/expense_head_data.xml",
         "views/fund_account_views.xml",

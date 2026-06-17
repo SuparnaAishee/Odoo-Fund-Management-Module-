@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Multi-company isolation (BR-37). Global rules (no groups) are  -->
+    <!-- AND-combined with every group rule, so no user can ever read   -->
+    <!-- another company's records.                                     -->
+    <!-- ============================================================ -->
+    <record id="rule_account_company" model="ir.rule">
+        <field name="name">Fund Account: multi-company</field>
+        <field name="model_id" ref="model_nn_fund_account"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+    </record>
+    <record id="rule_incoming_company" model="ir.rule">
+        <field name="name">Incoming Fund: multi-company</field>
+        <field name="model_id" ref="model_nn_incoming_fund"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+    </record>
+    <record id="rule_allocation_company" model="ir.rule">
+        <field name="name">Allocation: multi-company</field>
+        <field name="model_id" ref="model_nn_fund_allocation"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+    </record>
+    <record id="rule_requisition_company" model="ir.rule">
+        <field name="name">Requisition: multi-company</field>
+        <field name="model_id" ref="model_nn_fund_requisition"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+    </record>
+    <record id="rule_bill_company" model="ir.rule">
+        <field name="name">Bill: multi-company</field>
+        <field name="model_id" ref="model_nn_fund_bill"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+    </record>
+    <record id="rule_transfer_company" model="ir.rule">
+        <field name="name">Transfer: multi-company</field>
+        <field name="model_id" ref="model_nn_fund_transfer"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+    </record>
+    <record id="rule_movement_company" model="ir.rule">
+        <field name="name">Movement: multi-company</field>
+        <field name="model_id" ref="model_nn_fund_movement"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|',('company_id','=',False),('company_id','in',company_ids)]</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- "See only allowed requests" (BR-35). A plain Fund User sees    -->
+    <!-- only the requests they raised; Finance (and above) see all.    -->
+    <!-- Rules within the OR-set of a user's groups are unioned, so a   -->
+    <!-- Finance user (also in the Fund User group) gets the all-rule.  -->
+    <!-- Pure GM/MD approvers belong to neither group, so no rule       -->
+    <!-- restricts them and they can see every pending request.         -->
+    <!-- ============================================================ -->
+    <record id="rule_allocation_own" model="ir.rule">
+        <field name="name">Allocation: own requests (Fund User)</field>
+        <field name="model_id" ref="model_nn_fund_allocation"/>
+        <field name="groups" eval="[(4, ref('group_fund_user'))]"/>
+        <field name="domain_force">[('requested_by','=',user.id)]</field>
+    </record>
+    <record id="rule_allocation_all_finance" model="ir.rule">
+        <field name="name">Allocation: all (Finance)</field>
+        <field name="model_id" ref="model_nn_fund_allocation"/>
+        <field name="groups" eval="[(4, ref('group_finance_user'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+
+    <record id="rule_requisition_own" model="ir.rule">
+        <field name="name">Requisition: own requests (Fund User)</field>
+        <field name="model_id" ref="model_nn_fund_requisition"/>
+        <field name="groups" eval="[(4, ref('group_fund_user'))]"/>
+        <field name="domain_force">[('requested_by','=',user.id)]</field>
+    </record>
+    <record id="rule_requisition_all_finance" model="ir.rule">
+        <field name="name">Requisition: all (Finance)</field>
+        <field name="model_id" ref="model_nn_fund_requisition"/>
+        <field name="groups" eval="[(4, ref('group_finance_user'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+
+    <record id="rule_transfer_own" model="ir.rule">
+        <field name="name">Transfer: own requests (Fund User)</field>
+        <field name="model_id" ref="model_nn_fund_transfer"/>
+        <field name="groups" eval="[(4, ref('group_fund_user'))]"/>
+        <field name="domain_force">[('requested_by','=',user.id)]</field>
+    </record>
+    <record id="rule_transfer_all_finance" model="ir.rule">
+        <field name="name">Transfer: all (Finance)</field>
+        <field name="model_id" ref="model_nn_fund_transfer"/>
+        <field name="groups" eval="[(4, ref('group_finance_user'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+</odoo>
