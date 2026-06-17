@@ -29,6 +29,20 @@ class FundDashboard(models.Model):
     expense_head_count = fields.Integer(compute="_compute_kpis")
     movement_count = fields.Integer(compute="_compute_kpis")
 
+    project_ids = fields.Many2many("nn.project", compute="_compute_lists")
+    expense_head_ids = fields.Many2many("nn.expense.head", compute="_compute_lists")
+    recent_movement_ids = fields.Many2many("nn.fund.movement", compute="_compute_lists")
+
+    @api.depends("name")
+    def _compute_lists(self):
+        projects = self.env["nn.project"].search([])
+        heads = self.env["nn.expense.head"].search([])
+        movements = self.env["nn.fund.movement"].search([], limit=12)
+        for rec in self:
+            rec.project_ids = projects
+            rec.expense_head_ids = heads
+            rec.recent_movement_ids = movements
+
     @api.depends("name")
     def _compute_kpis(self):
         accounts = self.env["nn.fund.account"].search([])
