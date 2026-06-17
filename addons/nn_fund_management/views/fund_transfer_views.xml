@@ -88,9 +88,82 @@
         </field>
     </record>
 
+    <record id="view_fund_transfer_kanban" model="ir.ui.view">
+        <field name="name">nn.fund.transfer.kanban</field>
+        <field name="model">nn.fund.transfer</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="state"/>
+                <field name="amount"/>
+                <field name="currency_id"/>
+                <field name="source_name"/>
+                <field name="dest_name"/>
+                <field name="requested_by"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click oe_kanban_card">
+                            <div t-if="record.state.raw_value == 'approved'" class="bg-success" style="height:4px;"/>
+                            <div t-elif="record.state.raw_value == 'rejected'" class="bg-danger" style="height:4px;"/>
+                            <div t-elif="['submitted','gm_approval','md_approval'].includes(record.state.raw_value)" class="bg-warning" style="height:4px;"/>
+                            <div t-else="" class="bg-secondary" style="height:4px;"/>
+                            <div class="p-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <strong><field name="name"/></strong>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'approved'"
+                                           decoration-danger="state == 'rejected'"
+                                           decoration-warning="state in ('submitted','gm_approval','md_approval')"
+                                           decoration-muted="state in ('draft','cancelled')"/>
+                                </div>
+                                <div class="text-muted">
+                                    <field name="source_name"/> <i class="fa fa-arrow-right mx-1" title="to"/> <field name="dest_name"/>
+                                </div>
+                                <h4 class="mt-2 mb-1"><field name="amount" widget="monetary"/></h4>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted"><i class="fa fa-user me-1" title="Requested by"/><field name="requested_by"/></small>
+                                    <div>
+                                        <button name="action_submit" type="object" class="btn btn-sm btn-primary"
+                                                t-if="record.state.raw_value == 'draft'">Submit</button>
+                                        <button name="action_approve" type="object" class="btn btn-sm btn-success"
+                                                t-if="['submitted','gm_approval','md_approval'].includes(record.state.raw_value)">Approve</button>
+                                        <button name="action_reject" type="object" class="btn btn-sm btn-outline-danger ms-1"
+                                                t-if="['submitted','gm_approval','md_approval'].includes(record.state.raw_value)">Reject</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_fund_transfer_search" model="ir.ui.view">
+        <field name="name">nn.fund.transfer.search</field>
+        <field name="model">nn.fund.transfer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="source_name"/>
+                <field name="dest_name"/>
+                <field name="requested_by"/>
+                <filter name="my_requests" string="My Requests" domain="[('requested_by', '=', uid)]"/>
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="pending" string="Pending Approval"
+                        domain="[('state', 'in', ('submitted', 'gm_approval', 'md_approval'))]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_requested_by" string="Requested By" context="{'group_by': 'requested_by'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_fund_transfer" model="ir.actions.act_window">
         <field name="name">Fund Transfers</field>
         <field name="res_model">nn.fund.transfer</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form</field>
     </record>
 </odoo>

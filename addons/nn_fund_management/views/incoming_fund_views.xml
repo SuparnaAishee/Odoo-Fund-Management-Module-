@@ -59,9 +59,65 @@
         </field>
     </record>
 
+    <record id="view_incoming_fund_kanban" model="ir.ui.view">
+        <field name="name">nn.incoming.fund.kanban</field>
+        <field name="model">nn.incoming.fund</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="state"/>
+                <field name="amount"/>
+                <field name="currency_id"/>
+                <field name="fund_account_id"/>
+                <field name="sender"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click oe_kanban_card">
+                            <div t-if="record.state.raw_value == 'confirmed'" class="bg-success" style="height:4px;"/>
+                            <div t-else="" class="bg-secondary" style="height:4px;"/>
+                            <div class="p-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <strong><field name="name"/></strong>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'confirmed'"
+                                           decoration-muted="state == 'draft'"/>
+                                </div>
+                                <div class="text-muted"><i class="fa fa-bank me-1" title="Fund account"/><field name="fund_account_id"/></div>
+                                <h4 class="mt-2 mb-1"><field name="amount" widget="monetary"/></h4>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted"><field name="sender"/></small>
+                                    <button name="action_confirm" type="object" class="btn btn-sm btn-primary"
+                                            t-if="record.state.raw_value == 'draft'">Confirm</button>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_incoming_fund_search" model="ir.ui.view">
+        <field name="name">nn.incoming.fund.search</field>
+        <field name="model">nn.incoming.fund</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="fund_account_id"/>
+                <field name="transaction_reference"/>
+                <field name="sender"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_account" string="Fund Account" context="{'group_by': 'fund_account_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_incoming_fund" model="ir.actions.act_window">
         <field name="name">Incoming Funds</field>
         <field name="res_model">nn.incoming.fund</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form</field>
     </record>
 </odoo>

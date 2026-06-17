@@ -60,9 +60,66 @@
         </field>
     </record>
 
+    <record id="view_fund_bill_kanban" model="ir.ui.view">
+        <field name="name">nn.fund.bill.kanban</field>
+        <field name="model">nn.fund.bill</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="state"/>
+                <field name="amount"/>
+                <field name="currency_id"/>
+                <field name="requisition_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click oe_kanban_card">
+                            <div t-if="record.state.raw_value == 'posted'" class="bg-success" style="height:4px;"/>
+                            <div t-elif="record.state.raw_value == 'cancelled'" class="bg-danger" style="height:4px;"/>
+                            <div t-else="" class="bg-secondary" style="height:4px;"/>
+                            <div class="p-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <strong><field name="name"/></strong>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'posted'"
+                                           decoration-danger="state == 'cancelled'"
+                                           decoration-muted="state == 'draft'"/>
+                                </div>
+                                <div class="text-muted"><i class="fa fa-file-text-o me-1" title="Requisition"/><field name="requisition_id"/></div>
+                                <h4 class="mt-2 mb-1"><field name="amount" widget="monetary"/></h4>
+                                <div class="d-flex justify-content-end align-items-center mt-2">
+                                    <button name="action_post" type="object" class="btn btn-sm btn-primary"
+                                            t-if="record.state.raw_value == 'draft'">Post</button>
+                                    <button name="action_reverse" type="object" class="btn btn-sm btn-outline-danger ms-1"
+                                            t-if="record.state.raw_value == 'posted'">Reverse</button>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_fund_bill_search" model="ir.ui.view">
+        <field name="name">nn.fund.bill.search</field>
+        <field name="model">nn.fund.bill</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="requisition_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_requisition" string="Requisition" context="{'group_by': 'requisition_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_fund_bill" model="ir.actions.act_window">
         <field name="name">Bills</field>
         <field name="res_model">nn.fund.bill</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form</field>
     </record>
 </odoo>
