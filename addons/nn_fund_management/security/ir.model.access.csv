@@ -45,3 +45,7 @@ access_dashboard_finance,dashboard.finance,model_nn_fund_dashboard,group_finance
 access_dashboard_gm,dashboard.gm,model_nn_fund_dashboard,group_gm_approver,1,0,0,0
 access_dashboard_md,dashboard.md,model_nn_fund_dashboard,group_md_approver,1,0,0,0
 access_dashboard_admin,dashboard.admin,model_nn_fund_dashboard,group_fund_admin,1,1,1,1
+access_rule_fund_user,rule.fund.user,model_nn_approval_rule,group_fund_user,1,0,0,0
+access_rule_admin,rule.admin,model_nn_approval_rule,group_fund_admin,1,1,1,1
+access_rule_line_fund_user,rule.line.fund.user,model_nn_approval_rule_line,group_fund_user,1,0,0,0
+access_rule_line_admin,rule.line.admin,model_nn_approval_rule_line,group_fund_admin,1,1,1,1

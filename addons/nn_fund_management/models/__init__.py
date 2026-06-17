@@ -6,6 +6,7 @@ from . import expense_head
 from . import incoming_fund
 from . import approval_line
 from . import approval_mixin
+from . import approval_rule
 from . import fund_allocation
 from . import fund_requisition
 from . import fund_bill

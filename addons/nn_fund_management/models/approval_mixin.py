@@ -3,11 +3,20 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError, AccessError, ValidationError
 
 # Each level is (code, approver group, the state where this level decides).
-# Kept as data rather than hardcoded users so the chain can be overridden later.
+# Kept as data rather than hardcoded users so the chain can be overridden.
 DEFAULT_LEVELS = [
     ("gm", "nn_fund_management.group_gm_approver", "submitted"),
     ("md", "nn_fund_management.group_md_approver", "gm_approval"),
 ]
+
+# Generic stage states reused by both the default chain and configurable rules,
+# so a rule of 1-3 levels maps positionally onto the same workflow states.
+STAGE_STATES = ["submitted", "gm_approval", "md_approval"]
+LEVEL_GROUP = {
+    "gm": "nn_fund_management.group_gm_approver",
+    "finance": "nn_fund_management.group_finance_user",
+    "md": "nn_fund_management.group_md_approver",
+}
 
 
 class ApprovalMixin(models.AbstractModel):
@@ -46,8 +55,18 @@ class ApprovalMixin(models.AbstractModel):
         help="Guards against posting the final money effect more than once.",
     )
 
-    # Override these for a per-type or amount-banded approval chain.
+    # The chain comes from the best-matching approval rule (per type / amount /
+    # company); with no rule, it falls back to the default GM -> MD chain.
     def _approval_levels(self):
+        # Rule lookup runs with system rights: an approver may not be a Fund
+        # User, so they need not have read access to the rules themselves.
+        rule = self.env["nn.approval.rule"].sudo()._match_for(self)
+        if rule and rule.line_ids:
+            lines = rule.line_ids.sorted("sequence")[:len(STAGE_STATES)]
+            return [
+                (line.level, LEVEL_GROUP[line.level], STAGE_STATES[i])
+                for i, line in enumerate(lines)
+            ]
         return DEFAULT_LEVELS
 
     def _allow_self_approval(self):
@@ -72,6 +91,7 @@ class ApprovalMixin(models.AbstractModel):
     def _post_on_cancel(self):
         return self._post_on_reject()
 
+    @api.depends("state")
     def _compute_current_level(self):
         for rec in self:
             level = rec._current_level()

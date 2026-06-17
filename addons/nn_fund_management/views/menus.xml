@@ -39,4 +39,6 @@
               parent="menu_fund_config" action="action_project" sequence="20"/>
     <menuitem id="menu_expense_head" name="Expense Heads"
               parent="menu_fund_config" action="action_expense_head" sequence="30"/>
+    <menuitem id="menu_approval_rule" name="Approval Rules"
+              parent="menu_fund_config" action="action_approval_rule" sequence="40"/>
 </odoo>

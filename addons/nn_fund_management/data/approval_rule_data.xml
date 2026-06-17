@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Example amount-band rules from the brief. Shipped inactive so the
+         default GM -> MD chain applies out of the box; activate to route by
+         amount (e.g. >200,000 needs GM, then Finance, then MD). -->
+    <record id="rule_band_low" model="nn.approval.rule">
+        <field name="name">Up to 50,000 — GM only</field>
+        <field name="min_amount">0</field>
+        <field name="max_amount">50000</field>
+        <field name="sequence">10</field>
+        <field name="active" eval="False"/>
+        <field name="line_ids" eval="[(0, 0, {'sequence': 1, 'level': 'gm'})]"/>
+    </record>
+
+    <record id="rule_band_mid" model="nn.approval.rule">
+        <field name="name">50,001 to 200,000 — GM + Finance</field>
+        <field name="min_amount">50000</field>
+        <field name="max_amount">200000</field>
+        <field name="sequence">20</field>
+        <field name="active" eval="False"/>
+        <field name="line_ids" eval="[(0, 0, {'sequence': 1, 'level': 'gm'}), (0, 0, {'sequence': 2, 'level': 'finance'})]"/>
+    </record>
+
+    <record id="rule_band_high" model="nn.approval.rule">
+        <field name="name">Above 200,000 — GM + Finance + MD</field>
+        <field name="min_amount">200000</field>
+        <field name="max_amount">0</field>
+        <field name="sequence">30</field>
+        <field name="active" eval="False"/>
+        <field name="line_ids" eval="[(0, 0, {'sequence': 1, 'level': 'gm'}), (0, 0, {'sequence': 2, 'level': 'finance'}), (0, 0, {'sequence': 3, 'level': 'md'})]"/>
+    </record>
+</odoo>
