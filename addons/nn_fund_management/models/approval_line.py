@@ -3,9 +3,8 @@ from odoo import api, fields, models
 
 
 class ApprovalLine(models.Model):
-    """Immutable history of one approval decision (BR-17). Stored generically by
-    (res_model, res_id) so a single history model serves every approvable
-    document (allocation, requisition, transfer)."""
+    """History of one approval decision, stored generically by (res_model,
+    res_id) so a single model serves every approvable document."""
 
     _name = "nn.approval.line"
     _description = "Approval Decision Line"

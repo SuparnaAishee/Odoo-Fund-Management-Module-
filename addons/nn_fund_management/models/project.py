@@ -6,9 +6,8 @@ from .bucket_balance import bucket_sums
 
 
 class NnProject(models.Model):
-    """Light, self-contained project model (ADR-0002) -- intentionally not
-    coupled to the heavy ``project`` app. A fund bucket that holds balances
-    computed entirely from the ledger (BR-18)."""
+    """Light, self-contained project model, deliberately decoupled from the
+    heavy ``project`` app. A fund bucket whose balances come from the ledger."""
 
     _name = "nn.project"
     _description = "Fund Project"
@@ -49,7 +48,7 @@ class NnProject(models.Model):
 
     @api.constrains("movement_ids")
     def _check_non_negative(self):
-        # BR-04: no bucket balance may go negative.
+        # No bucket balance may go negative.
         for rec in self:
             cur = rec.currency_id
             for label, value in (

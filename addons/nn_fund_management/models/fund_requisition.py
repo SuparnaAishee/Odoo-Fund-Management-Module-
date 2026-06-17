@@ -4,9 +4,8 @@ from odoo.exceptions import ValidationError, UserError
 
 
 class FundRequisition(models.Model):
-    """Request funds *from* a project/head. Hold on submit, keep reserved on
-    approve, bill against it (Phase 6), release the unused part on close
-    (PDF section 6)."""
+    """Request funds from a project or head. Hold on submit, keep reserved on
+    approve, bill against it, release the unused part on close."""
 
     _name = "nn.fund.requisition"
     _description = "Fund Requisition"
@@ -33,7 +32,7 @@ class FundRequisition(models.Model):
         help="Approved amount still available to bill against.",
     )
 
-    # Extend the shared approval state machine with a 'closed' terminal state.
+    # Add a 'closed' terminal state on top of the shared approval states.
     state = fields.Selection(
         selection_add=[("closed", "Closed")],
         ondelete={"closed": "set default"},
@@ -57,8 +56,8 @@ class FundRequisition(models.Model):
 
     @api.depends("state", "amount", "bill_ids.state", "bill_ids.amount")
     def _compute_remaining_billable(self):
-        # Only an *approved* (not yet closed) requisition has anything left to
-        # bill; posted bills consume the billable amount (BR-26/27).
+        # Only an approved (not yet closed) requisition is billable; posted
+        # bills consume the remaining amount.
         for rec in self:
             if rec.state == "approved":
                 billed = sum(b.amount for b in rec.bill_ids if b.state == "posted")
@@ -101,9 +100,8 @@ class FundRequisition(models.Model):
         self.ensure_one()
         return self.project_id, self.expense_head_id
 
-    # -- Approval-mixin hooks ---------------------------------------------- #
     def _validate_submit(self):
-        # BR-20: cannot hold more than the bucket currently has available.
+        # Can't hold more than the bucket currently has available.
         for rec in self:
             bucket = rec.project_id or rec.expense_head_id
             available = bucket.available
@@ -123,8 +121,8 @@ class FundRequisition(models.Model):
         return True
 
     def _post_on_approve(self):
-        # BR-21: nothing leaves the bucket on approval; the amount simply stays
-        # reserved (still held) and becomes billable.
+        # Nothing leaves the bucket on approval; the held amount just becomes
+        # billable.
         return True
 
     def _post_on_reject(self):
@@ -135,8 +133,8 @@ class FundRequisition(models.Model):
         return True
 
     def action_close(self):
-        """BR-23: close an approved requisition, releasing any unused (unbilled)
-        reservation back to the bucket's available balance."""
+        """Close an approved requisition, releasing any unbilled reservation
+        back to the bucket's available balance."""
         self = self.with_context(mail_notify_force_send=False)
         Move = self.env["nn.fund.movement"]
         for rec in self:

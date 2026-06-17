@@ -6,9 +6,9 @@ from .bucket_balance import bucket_sums
 
 
 class ExpenseHead(models.Model):
-    """An expense head is the second kind of fund bucket (Office rent, Salary,
-    Utilities, ...). It shares the exact same ledger-derived balance logic as
-    ``nn.project`` (see ``bucket_balance``), so the two can never drift."""
+    """The second kind of fund bucket (Office rent, Salary, Utilities, ...).
+    Shares the ledger-derived balance logic in ``bucket_balance`` with
+    ``nn.project``, so the two can never drift."""
 
     _name = "nn.expense.head"
     _description = "Expense Head"
@@ -49,7 +49,7 @@ class ExpenseHead(models.Model):
 
     @api.constrains("movement_ids")
     def _check_non_negative(self):
-        # BR-04: no bucket balance may go negative.
+        # No bucket balance may go negative.
         for rec in self:
             cur = rec.currency_id
             for label, value in (

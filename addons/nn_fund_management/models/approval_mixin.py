@@ -2,10 +2,8 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, AccessError, ValidationError
 
-# Ordered approval chain. Each level: (code, group external id, the state in
-# which this level is the *current* approver). The chain is intentionally data,
-# not hardcoded user IDs (BR-16); the bonus rule engine can later override
-# ``_approval_levels`` per request type / amount band.
+# Each level is (code, approver group, the state where this level decides).
+# Kept as data rather than hardcoded users so the chain can be overridden later.
 DEFAULT_LEVELS = [
     ("gm", "nn_fund_management.group_gm_approver", "submitted"),
     ("md", "nn_fund_management.group_md_approver", "gm_approval"),
@@ -13,10 +11,9 @@ DEFAULT_LEVELS = [
 
 
 class ApprovalMixin(models.AbstractModel):
-    """Reusable GM -> MD approval state machine shared by allocation,
-    requisition and transfer. Concrete models implement the ``_post_on_*``
-    hooks to post their own ledger lines; the mixin owns the workflow, the
-    guards (BR-13..16) and the idempotency (BR-03)."""
+    """GM -> MD approval state machine shared by allocation, requisition and
+    transfer. Concrete models implement the ``_post_on_*`` hooks to post their
+    own ledger lines; the mixin owns the workflow and guards."""
 
     _name = "nn.approval.mixin"
     _description = "Approval Mixin"
@@ -46,28 +43,22 @@ class ApprovalMixin(models.AbstractModel):
     )
     posted = fields.Boolean(
         string="Final Effect Posted", default=False, copy=False, readonly=True,
-        help="Idempotency guard: the final money effect posts at most once (BR-03).",
+        help="Guards against posting the final money effect more than once.",
     )
 
-    # ------------------------------------------------------------------ #
-    # Configuration hooks (override for the bonus rule engine)
-    # ------------------------------------------------------------------ #
+    # Override these for a per-type or amount-banded approval chain.
     def _approval_levels(self):
         return DEFAULT_LEVELS
 
     def _allow_self_approval(self):
-        # BR-15: a user may not approve their own request unless flagged.
         return False
 
-    # ------------------------------------------------------------------ #
-    # Concrete-model hooks (post ledger lines)
-    # ------------------------------------------------------------------ #
+    # Concrete models post their ledger lines through these hooks.
     def _validate_submit(self):
-        """Raise ValidationError if the request may not be submitted."""
         return True
 
     def _post_on_submit(self):
-        """Post HOLD ledger lines."""
+        """Post the hold lines."""
         return True
 
     def _post_on_approve(self):
@@ -75,15 +66,12 @@ class ApprovalMixin(models.AbstractModel):
         return True
 
     def _post_on_reject(self):
-        """Post RELEASE ledger lines (also reused on cancel)."""
+        """Release the hold. Reused on cancel."""
         return True
 
     def _post_on_cancel(self):
         return self._post_on_reject()
 
-    # ------------------------------------------------------------------ #
-    # Computed
-    # ------------------------------------------------------------------ #
     def _compute_current_level(self):
         for rec in self:
             level = rec._current_level()
@@ -99,12 +87,8 @@ class ApprovalMixin(models.AbstractModel):
             else:
                 rec.approval_line_ids = Line.browse()
 
-    # ------------------------------------------------------------------ #
-    # Level resolution & guards
-    # ------------------------------------------------------------------ #
     def _current_level(self):
-        """Return the (code, group, pending_state) tuple whose pending_state ==
-        the record's current state, or False if not awaiting a decision."""
+        """The level whose pending state matches the record's state, else False."""
         self.ensure_one()
         for level in self._approval_levels():
             if level[2] == self.state:
@@ -112,8 +96,6 @@ class ApprovalMixin(models.AbstractModel):
         return False
 
     def _check_approver(self, level):
-        """Server-side approval guards (BR-13..15), independent of button
-        visibility (BR-38)."""
         self.ensure_one()
         code, group_xmlid, _state = level
         if not self.env.user.has_group(group_xmlid):
@@ -141,12 +123,9 @@ class ApprovalMixin(models.AbstractModel):
             body += ": " + comment
         self.message_post(body=body)
 
-    # ------------------------------------------------------------------ #
-    # Workflow actions
-    # ------------------------------------------------------------------ #
     def action_submit(self):
-        # Queue tracking notifications rather than force-sending them, so the
-        # workflow never fails just because no outgoing mail server is set up.
+        # Queue tracking mails instead of force-sending, so a missing outgoing
+        # mail server never breaks the workflow.
         self = self.with_context(mail_notify_force_send=False)
         for rec in self:
             if rec.state != "draft":
@@ -162,11 +141,10 @@ class ApprovalMixin(models.AbstractModel):
             level = rec._current_level()
             if not level:
                 raise UserError(_("This request is not awaiting approval."))
-            # Authorize as the *real* user (group + self-approval guards)...
             rec._check_approver(level)
-            # ...then perform the privileged writes with elevated rights, since
-            # an approver only holds read access to the document (BR-38). sudo()
-            # keeps the acting user, so the decision is still attributed to them.
+            # Approvers only have read access to the document, so the state and
+            # ledger writes run as superuser. The decision stays attributed to
+            # the acting user via the approval line above.
             rec_su = rec.sudo()
             rec_su._add_approval_line(level[0], "approved", self.env.context.get("approval_comment"))
 
@@ -174,13 +152,11 @@ class ApprovalMixin(models.AbstractModel):
             codes = [lvl[0] for lvl in levels]
             idx = codes.index(level[0])
             if idx == len(levels) - 1:
-                # Final approver: post the money effect exactly once (BR-03).
                 if not rec_su.posted:
                     rec_su._post_on_approve()
                     rec_su.posted = True
                 rec_su.state = "approved"
             else:
-                # Advance to the state where the next level is the approver.
                 rec_su.state = levels[idx + 1][2]
         return True
 

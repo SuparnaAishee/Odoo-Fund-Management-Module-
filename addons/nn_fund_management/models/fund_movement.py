@@ -2,30 +2,15 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
-# --------------------------------------------------------------------------- #
-# The append-only Fund Movement Ledger (ADR-0001).
+# Append-only ledger: every money event is one immutable row, and all balances
+# elsewhere are computed sums over these rows. Move types are explicit so each
+# balance is an unambiguous sum over a single type, with no per-model branching:
 #
-# Every atomic money event is one immutable row. ALL balances elsewhere are
-# computed sums over these rows -- no balance is ever written by hand. The
-# conceptual eight move types in the docs are refined here into explicit,
-# self-describing sub-types so that each balance is an unambiguous sum over a
-# single move_type, with no origin-model branching:
-#
-#   incoming          account: +received, +unassigned
-#   alloc_hold        account: unassigned -> on_hold        (allocation submit)
-#   alloc_release     account: on_hold -> unassigned        (allocation reject/cancel)
-#   assign            account: on_hold -> assigned (out);    (allocation approve)
-#                     bucket : +allocated
-#   req_hold          bucket : available -> requisition_hold (requisition submit)
-#   req_release       bucket : requisition_hold -> available (requisition reject/cancel/close)
-#   spend             bucket : requisition_hold -> spent     (bill post)
-#   reverse           bucket : spent -> requisition_hold     (bill reverse)
-#   transfer_hold     bucket : available -> transfer_hold    (transfer submit, source)
-#   transfer_release  bucket : transfer_hold -> available    (transfer reject/cancel, source)
-#   transfer_settle   bucket : transfer_hold -> gone         (transfer approve, source)
-#   transfer_in       bucket : +available                    (transfer approve, dest)
-# --------------------------------------------------------------------------- #
-
+#   incoming                              account: +received, +unassigned
+#   alloc_hold / alloc_release / assign   account: unassigned <-> on_hold -> assigned
+#   req_hold / req_release / spend / reverse      bucket: available <-> hold <-> spent
+#   transfer_hold / transfer_release / transfer_settle    bucket: source side
+#   transfer_in                                           bucket: destination side
 MOVE_TYPES = [
     ("incoming", "Incoming"),
     ("alloc_hold", "Allocation Hold"),
@@ -68,8 +53,7 @@ class FundMovement(models.Model):
     project_id = fields.Many2one("nn.project", string="Project", index=True, ondelete="restrict")
     expense_head_id = fields.Many2one("nn.expense.head", string="Expense Head", index=True, ondelete="restrict")
 
-    # Source document, kept as model/id so the ledger never hard-depends on a
-    # specific transaction model.
+    # Source document as model/id, so the ledger never hard-depends on a model.
     origin_model = fields.Char(string="Source Model", index=True)
     origin_id = fields.Integer(string="Source ID", index=True)
     reference = fields.Char(string="Reference")
@@ -83,9 +67,9 @@ class FundMovement(models.Model):
 
     @api.model
     def _post(self, move_type, amount, origin, account=False, project=False, expense_head=False):
-        """Single entry point for posting a ledger line. Runs as superuser
-        because the ledger is read-only to everyone (BR-18); the calling
-        workflow has already enforced its own access checks."""
+        """Single entry point for posting a ledger line. Runs as superuser since
+        the ledger is read-only to everyone; the caller has already done its own
+        access checks."""
         company = origin.company_id if origin.company_id else self.env.company
         currency = origin.currency_id if origin.currency_id else company.currency_id
         return self.sudo().create({
@@ -109,7 +93,7 @@ class FundMovement(models.Model):
             label = type_label.get(move.move_type, move.move_type or "")
             move.display_name = "%s: %s" % (label, move.reference or move.amount)
 
-    # -- Immutability (BR-40): the ledger is append-only ------------------- #
+    # The ledger is append-only: edits and deletes are blocked, post a reversal.
     def write(self, vals):
         raise UserError(_(
             "Fund movements are immutable. Post a compensating reversal instead "

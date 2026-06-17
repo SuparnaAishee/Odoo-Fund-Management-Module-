@@ -4,9 +4,8 @@ from odoo.exceptions import ValidationError
 
 
 class FundAllocation(models.Model):
-    """Assign unassigned account funds to a project XOR an expense head, through
-    the GM -> MD approval chain. Hold on submit, assign on approve, release on
-    reject/cancel (PDF section 3)."""
+    """Assign an account's unassigned funds to a project or an expense head.
+    Hold on submit, assign on approve, release on reject/cancel."""
 
     _name = "nn.fund.allocation"
     _description = "Fund Allocation"
@@ -25,7 +24,6 @@ class FundAllocation(models.Model):
     request_date = fields.Date(string="Request Date", required=True, default=fields.Date.context_today)
     attachment_ids = fields.Many2many("ir.attachment", string="Attachments")
 
-    # Convenience: the chosen target bucket, for display.
     target_name = fields.Char(string="Target", compute="_compute_target_name")
 
     _sql_constraints = [
@@ -44,7 +42,6 @@ class FundAllocation(models.Model):
                 vals["name"] = self.env["ir.sequence"].next_by_code("nn.fund.allocation") or _("New")
         return super().create(vals_list)
 
-    # -- BR-09: a request targets a project XOR an expense head ------------ #
     @api.constrains("project_id", "expense_head_id")
     def _check_single_target(self):
         for rec in self:
@@ -54,9 +51,8 @@ class FundAllocation(models.Model):
                     "expense head (never both, never neither)."
                 ))
 
-    # -- Approval-mixin hooks ---------------------------------------------- #
     def _validate_submit(self):
-        # BR-10: cannot hold more than the account currently has unassigned.
+        # Can't hold more than the account currently has unassigned.
         for rec in self:
             available = rec.fund_account_id.unassigned
             if rec.currency_id.compare_amounts(rec.amount, available) > 0:

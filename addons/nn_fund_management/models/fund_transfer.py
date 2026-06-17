@@ -4,10 +4,8 @@ from odoo.exceptions import ValidationError
 
 
 class FundTransfer(models.Model):
-    """Move funds between any two buckets (project/head -> project/head) through
-    the GM -> MD chain. Hold on the source at submit, settle out of the source
-    and into the destination on approve, release on reject/cancel (PDF
-    section 8)."""
+    """Move funds between two buckets. Hold the source on submit, settle out of
+    the source and into the destination on approve, release on reject/cancel."""
 
     _name = "nn.fund.transfer"
     _description = "Fund Transfer"
@@ -63,15 +61,13 @@ class FundTransfer(models.Model):
                 raise ValidationError(_("The source must be exactly one project or one expense head."))
             if bool(rec.dest_project_id) == bool(rec.dest_head_id):
                 raise ValidationError(_("The destination must be exactly one project or one expense head."))
-            # BR-34: source and destination cannot be the same bucket.
             same_project = rec.src_project_id and rec.src_project_id == rec.dest_project_id
             same_head = rec.src_head_id and rec.src_head_id == rec.dest_head_id
             if same_project or same_head:
                 raise ValidationError(_("Source and destination must be different buckets."))
 
-    # -- Approval-mixin hooks ---------------------------------------------- #
     def _validate_submit(self):
-        # BR-31: cannot transfer more than the source currently has available.
+        # Can't transfer more than the source currently has available.
         for rec in self:
             source = rec.src_project_id or rec.src_head_id
             available = source.available
@@ -93,10 +89,10 @@ class FundTransfer(models.Model):
     def _post_on_approve(self):
         Move = self.env["nn.fund.movement"]
         for rec in self:
-            # Settle out of the source (clears the hold, money leaves)...
+            # Clear the source hold (money leaves)...
             Move._post("transfer_settle", rec.amount, rec,
                        project=rec.src_project_id, expense_head=rec.src_head_id)
-            # ...and land in the destination (BR-32).
+            # ...and land it in the destination.
             Move._post("transfer_in", rec.amount, rec,
                        project=rec.dest_project_id, expense_head=rec.dest_head_id)
         return True

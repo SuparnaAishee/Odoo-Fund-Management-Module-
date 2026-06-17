@@ -26,7 +26,7 @@ class FundAccount(models.Model):
 
     movement_ids = fields.One2many("nn.fund.movement", "account_id", string="Movements")
 
-    # All balances are computed sums over the ledger (BR-18) -- never written. #
+    # All balances are computed sums over the ledger, never written by hand.
     received = fields.Monetary(string="Total Received", compute="_compute_balances", store=True)
     unassigned = fields.Monetary(string="Available (Unassigned)", compute="_compute_balances", store=True)
     on_hold = fields.Monetary(string="On Hold", compute="_compute_balances", store=True)
@@ -48,7 +48,7 @@ class FundAccount(models.Model):
 
     @api.constrains("movement_ids")
     def _check_non_negative(self):
-        # BR-04: an account's unassigned / on-hold balance can never go negative.
+        # An account's unassigned and on-hold balances can never go negative.
         for account in self:
             if account.currency_id.compare_amounts(account.unassigned, 0.0) < 0:
                 raise ValidationError(_(

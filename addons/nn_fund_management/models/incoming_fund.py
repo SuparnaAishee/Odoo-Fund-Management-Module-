@@ -44,10 +44,9 @@ class IncomingFund(models.Model):
         return super().create(vals_list)
 
     def action_confirm(self):
-        """Confirm a deposit -> post one immutable ``incoming`` ledger line so
-        the amount enters the account's unassigned balance (BR-07)."""
-        # BR-08 / BR-38: confirming a deposit is a Finance-only action, enforced
-        # server-side regardless of who can see the button.
+        """Confirm a deposit: post one incoming ledger line so the amount enters
+        the account's unassigned balance."""
+        # Finance-only, enforced server-side regardless of button visibility.
         if not self.env.user.has_group("nn_fund_management.group_finance_user"):
             raise AccessError(_("Only Finance users may confirm incoming funds."))
         self = self.with_context(mail_notify_force_send=False)
@@ -69,8 +68,8 @@ class IncomingFund(models.Model):
         return True
 
     def action_draft(self):
-        # Reverting to draft is not allowed once posted (BR-01/BR-40): an
-        # incoming line cannot be un-posted, only compensated.
+        # Once posted to the ledger an incoming line can only be compensated,
+        # never un-posted.
         raise UserError(_(
             "A confirmed incoming fund cannot be reset to draft; it has already "
             "posted to the ledger."

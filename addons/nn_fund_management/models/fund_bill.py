@@ -4,9 +4,9 @@ from odoo.exceptions import UserError, ValidationError
 
 
 class FundBill(models.Model):
-    """A bill spends against an approved requisition (custom model, ADR-0003).
-    Partial bills are allowed; posting marks the amount spent, reversing returns
-    it to remaining-billable and creates no funds (PDF section 7)."""
+    """A bill spends against an approved requisition. Partial bills are allowed;
+    posting marks the amount spent, reversing returns it to remaining-billable
+    and creates no funds."""
 
     _name = "nn.fund.bill"
     _description = "Fund Bill"
@@ -22,8 +22,8 @@ class FundBill(models.Model):
     date = fields.Date(string="Bill Date", required=True, default=fields.Date.context_today)
     description = fields.Text(string="Description")
 
-    # The bucket is inherited from the requisition, so a bill can never be
-    # billed against another project/head's requisition (BR-25/BR-28).
+    # Bucket and currency follow the requisition, so a bill can never land on
+    # another bucket.
     project_id = fields.Many2one(related="requisition_id.project_id", store=True, readonly=True)
     expense_head_id = fields.Many2one(related="requisition_id.expense_head_id", store=True, readonly=True)
     currency_id = fields.Many2one(related="requisition_id.currency_id", store=True, readonly=True)
@@ -53,19 +53,16 @@ class FundBill(models.Model):
             if bill.state != "draft":
                 raise UserError(_("Only a draft bill can be posted."))
             req = bill.requisition_id
-            # BR-24: the requisition must be approved.
             if req.state != "approved":
                 raise ValidationError(_(
                     "A bill can only be posted against an approved requisition."
                 ))
-            # BR-26/27: cannot bill more than what is still billable.
             if bill.currency_id.compare_amounts(bill.amount, req.remaining_billable) > 0:
                 raise ValidationError(_(
                     "Bill of %(amount)s exceeds the requisition's remaining "
                     "billable amount of %(remaining)s.",
                     amount=bill.amount, remaining=req.remaining_billable,
                 ))
-            # BR-29: post a spend line on the requisition's own bucket.
             Move._post(
                 "spend", bill.amount, bill,
                 project=req.project_id, expense_head=req.expense_head_id,
@@ -74,8 +71,8 @@ class FundBill(models.Model):
         return True
 
     def action_reverse(self):
-        """BR-30: reverse a posted bill -- a compensating line returns the amount
-        to remaining-billable and creates no new funds."""
+        """Reverse a posted bill: a compensating line returns the amount to
+        remaining-billable and creates no new funds."""
         self = self.with_context(mail_notify_force_send=False)
         Move = self.env["nn.fund.movement"]
         for bill in self:

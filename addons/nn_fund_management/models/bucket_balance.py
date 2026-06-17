@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Shared balance math for fund buckets (projects and expense heads).
 
-A *bucket* is any target that can hold allocated funds. All of its balances are
-pure sums over the ledger lines that reference it, so the same function serves
-both ``nn.project`` and ``nn.expense.head`` and the two can never drift apart.
+A bucket is any target that can hold allocated funds. Its balances are pure sums
+over the ledger lines referencing it, so one function serves both ``nn.project``
+and ``nn.expense.head`` and they can never drift apart. The amounts conserve:
 
-Money conservation for a bucket (proved by construction):
     allocated + transfer_in
         == available + requisition_hold + transfer_hold + spent + transfer_out
 """
@@ -28,7 +27,7 @@ def bucket_sums(movements):
     allocated = s["assign"]
     transfer_in = s["transfer_in"]
     transfer_out = s["transfer_settle"]
-    # A reservation is held from submit; spending it converts hold -> spent.
+    # Held from submit; spending converts the hold into spent.
     requisition_hold = s["req_hold"] - s["req_release"] - s["spend"] + s["reverse"]
     transfer_hold = s["transfer_hold"] - s["transfer_release"] - s["transfer_settle"]
     spent = s["spend"] - s["reverse"]
