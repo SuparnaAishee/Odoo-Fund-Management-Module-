@@ -24,6 +24,15 @@ class FundAccount(models.Model):
     )
     active = fields.Boolean(default=True)
 
+    # Optional matching keys so a parsed bank email can auto-route to this
+    # account: by bank name and/or the last digits of the account number.
+    bank_name = fields.Char(string="Bank Name")
+    account_ref = fields.Char(
+        string="Account Match Key",
+        help="Last digits of the bank account number, used to auto-match "
+             "incoming bank-notification emails to this fund account.",
+    )
+
     movement_ids = fields.One2many("nn.fund.movement", "account_id", string="Movements")
 
     # All balances are computed sums over the ledger, never written by hand.

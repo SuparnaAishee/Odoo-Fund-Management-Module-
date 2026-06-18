@@ -15,6 +15,8 @@
               parent="menu_fund_root" sequence="10"/>
     <menuitem id="menu_incoming_fund" name="Incoming Funds"
               parent="menu_fund_operations" action="action_incoming_fund" sequence="10"/>
+    <menuitem id="menu_bank_email" name="Bank Emails"
+              parent="menu_fund_operations" action="action_bank_email" sequence="15"/>
     <menuitem id="menu_fund_allocation" name="Allocations"
               parent="menu_fund_operations" action="action_fund_allocation" sequence="20"/>
     <menuitem id="menu_fund_requisition" name="Requisitions"

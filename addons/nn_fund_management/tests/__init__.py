@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import test_incoming
+from . import test_bank_email
 from . import test_allocation
 from . import test_approval
 from . import test_balances

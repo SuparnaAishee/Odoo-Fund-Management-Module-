@@ -52,6 +52,12 @@ docker compose run --rm odoo odoo -d nn_test -i nn_fund_management --stop-after-
    utilities, marketing, administrative). Add more under Configuration.
 4. **Outgoing mail** is optional — workflow tracking mails are *queued*, not
    force-sent, so a missing mail server never blocks an approval.
+5. **Bank email integration (bonus)** — to ingest real bank alerts, point an
+   incoming mail server (Settings → Technical → Incoming Mail Servers) at the
+   **`bank-funds`** alias; no bank credentials live in the source. On a fund
+   account, set **Bank Name** / **Account Match Key** (last digits) so parsed
+   emails auto-route. To try it without a mail server, open **Operations → Bank
+   Emails** and run the **Ingest sample bank email** action.
 
 ## Login credentials
 
@@ -73,16 +79,16 @@ it as `gm_demo`, then finalize as `md_demo`.
 
 ## Testing instructions
 
-The module ships 48 automated tests (allocation, approval, approval rules,
-balances, bills, incoming funds, requisitions, security, transfers, plus the
-full PDF demo scenario). Run them with:
+The module ships 55 automated tests (allocation, approval, approval rules,
+balances, bills, incoming funds, bank-email parsing, requisitions, security,
+transfers, plus the full PDF demo scenario). Run them with:
 
 ```bash
 docker compose run --rm odoo odoo -d nn_test -u nn_fund_management \
   --test-enable --stop-after-init
 ```
 
-A clean run ends with `0 failed, 0 error(s) of 48 tests`. Test sources live in
+A clean run ends with `0 failed, 0 error(s) of 55 tests`. Test sources live in
 `addons/nn_fund_management/tests/`; `test_demo_scenario.py` reproduces the
 section-13 walkthrough (receive 1,000,000 → allocate → reject → re-approve →
 transfer → requisition → partial bill → over-bill block).
@@ -124,8 +130,11 @@ machines, model spec, security matrix and AI-usage log.
 
 ## Known limitations
 
-- **Bank Email Integration (bonus §12) is not implemented** — no email-parsing
-  prototype ships in this submission.
+- **Bank Email Integration (bonus §12)** ships as a prototype: a regex parser
+  for credit alerts, Message-ID dedup, duplicate transaction-reference
+  detection, parse-failure logging, and a "Pending Verification" landing state.
+  It is not hardened for every bank's email format — unmatched layouts are
+  logged as parse failures for manual handling rather than guessed at.
 - Multi-currency is out of scope (single-company, single-currency assumption).
 - Approval-rule matching is by amount band + request type; per-project or
   per-category routing is seeded but not exhaustively tested.

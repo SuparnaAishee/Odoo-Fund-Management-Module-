@@ -49,3 +49,6 @@ access_rule_fund_user,rule.fund.user,model_nn_approval_rule,group_fund_user,1,0,
 access_rule_admin,rule.admin,model_nn_approval_rule,group_fund_admin,1,1,1,1
 access_rule_line_fund_user,rule.line.fund.user,model_nn_approval_rule_line,group_fund_user,1,0,0,0
 access_rule_line_admin,rule.line.admin,model_nn_approval_rule_line,group_fund_admin,1,1,1,1
+access_bank_email_fund_user,bank.email.fund.user,model_nn_bank_email,group_fund_user,1,0,0,0
+access_bank_email_finance,bank.email.finance,model_nn_bank_email,group_finance_user,1,1,1,0
+access_bank_email_admin,bank.email.admin,model_nn_bank_email,group_fund_admin,1,1,1,1

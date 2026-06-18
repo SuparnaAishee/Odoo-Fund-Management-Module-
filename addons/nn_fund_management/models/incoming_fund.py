@@ -23,8 +23,17 @@ class IncomingFund(models.Model):
     description = fields.Text(string="Description")
     attachment_ids = fields.Many2many("ir.attachment", string="Attachments")
 
+    # Provenance: a deposit may be keyed in by finance or auto-created from a
+    # parsed bank-notification email (the latter lands in "pending" for review).
+    source = fields.Selection(
+        [("manual", "Manual"), ("email", "Bank Email")],
+        string="Source", default="manual", required=True, readonly=True,
+    )
+    bank_email_id = fields.Many2one("nn.bank.email", string="Source Email", readonly=True, copy=False)
+    email_message_id = fields.Char(string="Email Message-ID", readonly=True, copy=False)
+
     state = fields.Selection(
-        [("draft", "Draft"), ("confirmed", "Confirmed")],
+        [("pending", "Pending Verification"), ("draft", "Draft"), ("confirmed", "Confirmed")],
         string="Status", default="draft", required=True, tracking=True,
     )
     movement_id = fields.Many2one("nn.fund.movement", string="Ledger Movement", readonly=True, copy=False)
@@ -42,6 +51,17 @@ class IncomingFund(models.Model):
             if vals.get("name", _("New")) == _("New"):
                 vals["name"] = self.env["ir.sequence"].next_by_code("nn.incoming.fund") or _("New")
         return super().create(vals_list)
+
+    def action_verify(self):
+        """Promote an email-sourced deposit from Pending Verification to Draft,
+        once a finance user has eyeballed the parsed figures."""
+        if not self.env.user.has_group("nn_fund_management.group_finance_user"):
+            raise AccessError(_("Only Finance users may verify incoming funds."))
+        for record in self:
+            if record.state != "pending":
+                raise UserError(_("Only pending incoming funds can be verified."))
+            record.state = "draft"
+        return True
 
     def action_confirm(self):
         """Confirm a deposit: post one incoming ledger line so the amount enters

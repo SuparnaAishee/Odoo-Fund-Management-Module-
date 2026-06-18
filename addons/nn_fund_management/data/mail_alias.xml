@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Incoming-mail endpoint for bank notifications. An admin points an
+         incoming mail server at this alias (Settings > Technical > Incoming
+         Mail Servers); no bank credentials are stored in the source. Emails
+         delivered here are parsed by nn.bank.email.message_new(). -->
+    <record id="mail_alias_bank_funds" model="mail.alias">
+        <field name="alias_name">bank-funds</field>
+        <field name="alias_model_id" ref="model_nn_bank_email"/>
+        <field name="alias_contact">everyone</field>
+    </record>
+</odoo>

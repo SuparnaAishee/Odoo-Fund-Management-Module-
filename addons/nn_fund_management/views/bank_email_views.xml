@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bank_email_tree" model="ir.ui.view">
+        <field name="name">nn.bank.email.tree</field>
+        <field name="model">nn.bank.email</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'imported'" decoration-warning="state == 'duplicate'"
+                  decoration-danger="state == 'failed'">
+                <field name="name"/>
+                <field name="subject"/>
+                <field name="bank_name"/>
+                <field name="transaction_reference"/>
+                <field name="transaction_date"/>
+                <field name="amount" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="incoming_fund_id"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_bank_email_form" model="ir.ui.view">
+        <field name="name">nn.bank.email.form</field>
+        <field name="model">nn.bank.email</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_import" type="object" string="Create Incoming Fund"
+                            class="oe_highlight"
+                            invisible="state != 'parsed' or incoming_fund_id != False"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="parsed,imported"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="not error">
+                        <field name="error" readonly="1" nolabel="1"/>
+                    </div>
+                    <group>
+                        <group string="Parsed">
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="transaction_reference"/>
+                            <field name="transaction_date"/>
+                            <field name="bank_name"/>
+                            <field name="account_number"/>
+                            <field name="sender"/>
+                        </group>
+                        <group string="Routing">
+                            <field name="fund_account_id"
+                                   readonly="state != 'parsed' or incoming_fund_id != False"/>
+                            <field name="incoming_fund_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Email">
+                        <field name="message_id"/>
+                        <field name="sender_email"/>
+                        <field name="subject"/>
+                        <field name="body_preview"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_bank_email_search" model="ir.ui.view">
+        <field name="name">nn.bank.email.search</field>
+        <field name="model">nn.bank.email</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="subject"/>
+                <field name="transaction_reference"/>
+                <field name="bank_name"/>
+                <filter name="parsed" string="Parsed" domain="[('state', '=', 'parsed')]"/>
+                <filter name="imported" string="Imported" domain="[('state', '=', 'imported')]"/>
+                <filter name="duplicate" string="Duplicate" domain="[('state', '=', 'duplicate')]"/>
+                <filter name="failed" string="Failed" domain="[('state', '=', 'failed')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_bank" string="Bank" context="{'group_by': 'bank_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_bank_email" model="ir.actions.act_window">
+        <field name="name">Bank Emails</field>
+        <field name="res_model">nn.bank.email</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No bank emails processed yet</p>
+            <p>Point an incoming mail server at the <b>bank-funds</b> alias, or use
+               <b>Ingest sample bank email</b> to try the parser.</p>
+        </field>
+    </record>
+
+    <record id="action_bank_email_sample" model="ir.actions.server">
+        <field name="name">Ingest sample bank email</field>
+        <field name="model_id" ref="model_nn_bank_email"/>
+        <field name="binding_model_id" ref="model_nn_bank_email"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_ingest_sample()</field>
+    </record>
+</odoo>
