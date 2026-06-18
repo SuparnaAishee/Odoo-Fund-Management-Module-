@@ -68,6 +68,13 @@ class FundBill(models.Model):
                 project=req.project_id, expense_head=req.expense_head_id,
             )
             bill.state = "posted"
+            # Alert when a requisition is almost fully billed (<= 10% left).
+            remaining = req.remaining_billable
+            if remaining > 0 and bill.currency_id.compare_amounts(remaining, req.amount * 0.1) <= 0:
+                req.message_post(body=_(
+                    "Requisition %(name)s is almost fully billed — %(left)s remaining.",
+                    name=req.name, left=remaining,
+                ))
         return True
 
     def action_reverse(self):
