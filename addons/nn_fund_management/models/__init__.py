@@ -4,6 +4,7 @@ from . import fund_account
 from . import project
 from . import expense_head
 from . import incoming_fund
+from . import bank_email
 from . import approval_line
 from . import approval_mixin
 from . import approval_rule
