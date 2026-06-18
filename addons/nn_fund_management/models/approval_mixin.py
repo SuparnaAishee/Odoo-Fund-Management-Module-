@@ -143,6 +143,32 @@ class ApprovalMixin(models.AbstractModel):
             body += ": " + comment
         self.message_post(body=body)
 
+    # ---- notifications & activities (PDF §12) -------------------------- #
+    def _schedule_approval_activity(self):
+        """Raise a To-Do activity for everyone who may approve the current
+        stage, so the next approver is alerted."""
+        self.ensure_one()
+        level = self._current_level()
+        if not level:
+            return
+        group = self.env.ref(level[1], raise_if_not_found=False)
+        if not group:
+            return
+        self.activity_unlink(["mail.mail_activity_data_todo"])
+        for user in group.users[:20]:
+            self.activity_schedule(
+                "mail.mail_activity_data_todo", user_id=user.id,
+                summary=_("Approval needed: %s", self.display_name),
+            )
+
+    def _clear_approval_activities(self):
+        self.activity_unlink(["mail.mail_activity_data_todo"])
+
+    def _notify_requester(self, body):
+        self.ensure_one()
+        partners = self.requested_by.partner_id.ids if self.requested_by else []
+        self.message_post(body=body, partner_ids=partners)
+
     def action_submit(self):
         # Queue tracking mails instead of force-sending, so a missing outgoing
         # mail server never breaks the workflow.
@@ -153,6 +179,7 @@ class ApprovalMixin(models.AbstractModel):
             rec._validate_submit()
             rec.state = "submitted"
             rec._post_on_submit()
+            rec.sudo()._schedule_approval_activity()
         return True
 
     def action_approve(self):
@@ -176,8 +203,11 @@ class ApprovalMixin(models.AbstractModel):
                     rec_su._post_on_approve()
                     rec_su.posted = True
                 rec_su.state = "approved"
+                rec_su._clear_approval_activities()
+                rec_su._notify_requester(_("Your request %s was approved.", rec.display_name))
             else:
                 rec_su.state = levels[idx + 1][2]
+                rec_su._schedule_approval_activity()
         return True
 
     def action_reject(self):
@@ -191,6 +221,8 @@ class ApprovalMixin(models.AbstractModel):
             rec_su._add_approval_line(level[0], "rejected", self.env.context.get("approval_comment"))
             rec_su.state = "rejected"
             rec_su._post_on_reject()
+            rec_su._clear_approval_activities()
+            rec_su._notify_requester(_("Your request %s was rejected.", rec.display_name))
         return True
 
     def action_cancel(self):
@@ -204,6 +236,7 @@ class ApprovalMixin(models.AbstractModel):
             if had_hold:
                 rec._post_on_cancel()
             rec.state = "cancelled"
+            rec.sudo()._clear_approval_activities()
         return True
 
     def action_reset_to_draft(self):
