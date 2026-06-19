@@ -34,6 +34,21 @@ class FundCase(TransactionCase):
         cls.finance_user = mk_user("Test Finance", "t_finance", "nn_fund_management.group_finance_user")
         cls.gm_user = mk_user("Test GM", "t_gm", "nn_fund_management.group_gm_approver")
         cls.md_user = mk_user("Test MD", "t_md", "nn_fund_management.group_md_approver")
+        # A Fund Administrator who can also approve at both levels, used to
+        # exercise the authorised-exception paths (self-approval, cancel-approved).
+        cls.admin_user = mk_user("Test Admin", "t_admin", "nn_fund_management.group_fund_admin")
+        cls.admin_user.groups_id = [
+            (4, cls.env.ref("nn_fund_management.group_gm_approver").id),
+            (4, cls.env.ref("nn_fund_management.group_md_approver").id),
+        ]
+        # A finance user who is *also* an approver but NOT an administrator: can
+        # raise and submit requests, yet must still be blocked from approving
+        # their own (self-approval is reserved for the admin role).
+        cls.approver_user = mk_user("Test Approver", "t_approver", "nn_fund_management.group_finance_user")
+        cls.approver_user.groups_id = [
+            (4, cls.env.ref("nn_fund_management.group_gm_approver").id),
+            (4, cls.env.ref("nn_fund_management.group_md_approver").id),
+        ]
 
         cls.account = cls.Account.create({
             "name": "Test Bank", "account_type": "bank",

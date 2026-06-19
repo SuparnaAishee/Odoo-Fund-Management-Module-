@@ -10,7 +10,8 @@ and ``nn.expense.head`` and they can never drift apart. The amounts conserve:
 """
 
 _BUCKET_MOVE_TYPES = (
-    "assign", "transfer_in", "transfer_settle",
+    "assign", "assign_reverse", "transfer_in", "transfer_in_reverse",
+    "transfer_settle", "transfer_settle_reverse",
     "req_hold", "req_release", "spend", "reverse",
     "transfer_hold", "transfer_release",
 )
@@ -24,9 +25,11 @@ def bucket_sums(movements):
         if move.move_type in s:
             s[move.move_type] += move.amount
 
-    allocated = s["assign"]
-    transfer_in = s["transfer_in"]
-    transfer_out = s["transfer_settle"]
+    # The *_reverse lines compensate an approved transaction that an authorised
+    # user later cancelled, so they net straight off their originals.
+    allocated = s["assign"] - s["assign_reverse"]
+    transfer_in = s["transfer_in"] - s["transfer_in_reverse"]
+    transfer_out = s["transfer_settle"] - s["transfer_settle_reverse"]
     # Held from submit; spending converts the hold into spent.
     requisition_hold = s["req_hold"] - s["req_release"] - s["spend"] + s["reverse"]
     transfer_hold = s["transfer_hold"] - s["transfer_release"] - s["transfer_settle"]

@@ -45,15 +45,20 @@ class FundAccount(models.Model):
     def _compute_balances(self):
         for account in self:
             sums = dict.fromkeys(
-                ("incoming", "alloc_hold", "alloc_release", "assign"), 0.0
+                ("incoming", "alloc_hold", "alloc_release", "assign", "assign_reverse"), 0.0
             )
             for move in account.movement_ids:
                 if move.move_type in sums:
                     sums[move.move_type] += move.amount
             account.received = sums["incoming"]
-            account.unassigned = sums["incoming"] - sums["alloc_hold"] + sums["alloc_release"]
+            # An assign_reverse (cancel of an approved allocation) returns the
+            # assigned amount to the unassigned pool and clears the assignment.
+            account.unassigned = (
+                sums["incoming"] - sums["alloc_hold"] + sums["alloc_release"]
+                + sums["assign_reverse"]
+            )
             account.on_hold = sums["alloc_hold"] - sums["alloc_release"] - sums["assign"]
-            account.assigned = sums["assign"]
+            account.assigned = sums["assign"] - sums["assign_reverse"]
 
     @api.constrains("movement_ids")
     def _check_non_negative(self):

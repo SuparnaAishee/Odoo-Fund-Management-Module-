@@ -70,7 +70,9 @@ class ApprovalMixin(models.AbstractModel):
         return DEFAULT_LEVELS
 
     def _allow_self_approval(self):
-        return False
+        # PDF §4: a user may not approve their own request *unless specially
+        # authorised*. A Fund Administrator is that authorised role.
+        return self.env.user.has_group("nn_fund_management.group_fund_admin")
 
     # Concrete models post their ledger lines through these hooks.
     def _validate_submit(self):
@@ -90,6 +92,11 @@ class ApprovalMixin(models.AbstractModel):
 
     def _post_on_cancel(self):
         return self._post_on_reject()
+
+    def _post_on_reverse(self):
+        """Undo the final money effect of an *approved* request when an
+        authorised user cancels it. Concrete models post compensating lines."""
+        return True
 
     @api.depends("state")
     def _compute_current_level(self):
@@ -228,10 +235,27 @@ class ApprovalMixin(models.AbstractModel):
     def action_cancel(self):
         self = self.with_context(mail_notify_force_send=False)
         for rec in self:
-            if rec.state in ("approved", "rejected", "cancelled"):
+            if rec.state in ("rejected", "cancelled", "closed"):
                 raise UserError(_(
-                    "A finalised request cannot be cancelled; post a reversal instead."
+                    "A %s request can no longer be cancelled.", rec.state
                 ))
+            if rec.state == "approved":
+                # PDF §9: only an authorised user (Fund Administrator) may cancel
+                # an approved transaction, and the posted money effect must be
+                # reversed (not merely a hold released) so no funds are created.
+                if not self.env.user.has_group("nn_fund_management.group_fund_admin"):
+                    raise UserError(_(
+                        "Only a Fund Administrator can cancel an approved "
+                        "transaction; it is reversed, not deleted."
+                    ))
+                rec_su = rec.sudo()
+                rec_su._post_on_reverse()
+                rec_su.state = "cancelled"
+                rec_su._clear_approval_activities()
+                rec_su._notify_requester(_(
+                    "Approved request %s was cancelled and reversed.", rec.display_name
+                ))
+                continue
             had_hold = rec.state in ("submitted", "gm_approval", "md_approval")
             if had_hold:
                 rec._post_on_cancel()

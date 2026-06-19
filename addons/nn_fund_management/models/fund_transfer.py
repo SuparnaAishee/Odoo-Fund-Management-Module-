@@ -103,3 +103,15 @@ class FundTransfer(models.Model):
             Move._post("transfer_release", rec.amount, rec,
                        project=rec.src_project_id, expense_head=rec.src_head_id)
         return True
+
+    def _post_on_reverse(self):
+        # Cancel of an approved transfer: pull the amount back out of the
+        # destination and restore the source's available balance. If the
+        # destination has already spent it, the non-negative constraint blocks.
+        Move = self.env["nn.fund.movement"]
+        for rec in self:
+            Move._post("transfer_in_reverse", rec.amount, rec,
+                       project=rec.dest_project_id, expense_head=rec.dest_head_id)
+            Move._post("transfer_settle_reverse", rec.amount, rec,
+                       project=rec.src_project_id, expense_head=rec.src_head_id)
+        return True

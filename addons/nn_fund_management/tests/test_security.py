@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import tagged
 
 from .common import FundCase
@@ -35,3 +35,44 @@ class TestSecurity(FundCase):
         visible = self.Allocation.with_user(self.fund_user).search([])
         self.assertIn(mine, visible)
         self.assertNotIn(other, visible)
+
+    # -- §4: self-approval only for the specially-authorised role ----------- #
+    def test_self_approval_blocked_for_non_admin(self):
+        """An approver who raised the request cannot approve their own request."""
+        self.deposit(1000000)
+        alloc = self.allocate(100000, project=self.project, requested_by=self.approver_user)
+        alloc.with_user(self.approver_user).action_submit()
+        with self.assertRaises(UserError):
+            alloc.with_user(self.approver_user).action_approve()
+
+    def test_self_approval_allowed_for_admin(self):
+        """A Fund Administrator is the authorised role, so may self-approve."""
+        self.deposit(1000000)
+        alloc = self.allocate(100000, project=self.project, requested_by=self.admin_user)
+        alloc.with_user(self.admin_user).action_submit()
+        alloc.with_user(self.admin_user).action_approve()   # GM level
+        alloc.with_user(self.admin_user).action_approve()   # MD level
+        self.assertEqual(alloc.state, "approved")
+
+    # -- §9: only authorised users cancel approved, and it reverses --------- #
+    def test_non_admin_cannot_cancel_approved(self):
+        alloc = self.fund_project(self.project, 500000)
+        self.assertEqual(alloc.state, "approved")
+        with self.assertRaises(UserError):
+            alloc.with_user(self.fund_user).action_cancel()
+
+    def test_admin_cancel_approved_reverses_money(self):
+        alloc = self.fund_project(self.project, 500000)
+        self.assertEqual(self.account.assigned, 500000)
+        self.assertEqual(self.project.allocated, 500000)
+        self.assertEqual(self.account.unassigned, 0)
+
+        alloc.with_user(self.admin_user).action_cancel()
+
+        self.assertEqual(alloc.state, "cancelled")
+        # money is fully reversed: back to unassigned, out of the bucket, and no
+        # new funds created (received is unchanged).
+        self.assertEqual(self.account.assigned, 0)
+        self.assertEqual(self.account.unassigned, 500000)
+        self.assertEqual(self.project.allocated, 0)
+        self.assertEqual(self.account.received, 500000)

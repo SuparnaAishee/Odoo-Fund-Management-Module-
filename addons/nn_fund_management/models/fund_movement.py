@@ -11,11 +11,19 @@ from odoo.exceptions import UserError
 #   req_hold / req_release / spend / reverse      bucket: available <-> hold <-> spent
 #   transfer_hold / transfer_release / transfer_settle    bucket: source side
 #   transfer_in                                           bucket: destination side
+#
+# The *_reverse types below undo an already-posted final effect when an
+# authorised user cancels an *approved* transaction (PDF §9). They are
+# compensating lines, so the ledger stays append-only and conserved:
+#   assign_reverse           account: assigned -> unassigned; bucket: -allocated
+#   transfer_settle_reverse  bucket: restores the source's available
+#   transfer_in_reverse      bucket: removes the amount from the destination
 MOVE_TYPES = [
     ("incoming", "Incoming"),
     ("alloc_hold", "Allocation Hold"),
     ("alloc_release", "Allocation Release"),
     ("assign", "Assign"),
+    ("assign_reverse", "Assign Reverse"),
     ("req_hold", "Requisition Hold"),
     ("req_release", "Requisition Release"),
     ("spend", "Spend"),
@@ -23,7 +31,9 @@ MOVE_TYPES = [
     ("transfer_hold", "Transfer Hold"),
     ("transfer_release", "Transfer Release"),
     ("transfer_settle", "Transfer Settle"),
+    ("transfer_settle_reverse", "Transfer Settle Reverse"),
     ("transfer_in", "Transfer In"),
+    ("transfer_in_reverse", "Transfer In Reverse"),
 ]
 
 

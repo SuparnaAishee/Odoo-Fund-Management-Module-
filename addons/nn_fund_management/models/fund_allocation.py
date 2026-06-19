@@ -84,3 +84,17 @@ class FundAllocation(models.Model):
         for rec in self:
             Move._post("alloc_release", rec.amount, rec, account=rec.fund_account_id)
         return True
+
+    def _post_on_reverse(self):
+        # Cancel of an approved allocation: send the assigned amount back to the
+        # account's unassigned pool and out of the bucket. If the bucket has
+        # already committed the funds downstream, the non-negative balance
+        # constraint blocks the cancel.
+        Move = self.env["nn.fund.movement"]
+        for rec in self:
+            Move._post(
+                "assign_reverse", rec.amount, rec,
+                account=rec.fund_account_id,
+                project=rec.project_id, expense_head=rec.expense_head_id,
+            )
+        return True

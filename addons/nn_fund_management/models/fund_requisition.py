@@ -132,6 +132,22 @@ class FundRequisition(models.Model):
             Move._post("req_release", rec.amount, rec, project=project, expense_head=head)
         return True
 
+    def _post_on_reverse(self):
+        # Cancel of an approved requisition releases the full reserved hold back
+        # to the bucket. Posted bills are real spending, so they must be reversed
+        # first (their own action_reverse) before the requisition can be cancelled.
+        Move = self.env["nn.fund.movement"]
+        for rec in self:
+            billed = sum(b.amount for b in rec.bill_ids if b.state == "posted")
+            if rec.currency_id.compare_amounts(billed, 0.0) > 0:
+                raise UserError(_(
+                    "Requisition %s has posted bills; reverse the bills before "
+                    "cancelling it.", rec.display_name
+                ))
+            project, head = rec._bucket()
+            Move._post("req_release", rec.amount, rec, project=project, expense_head=head)
+        return True
+
     def action_close(self):
         """Close an approved requisition, releasing any unbilled reservation
         back to the bucket's available balance."""
