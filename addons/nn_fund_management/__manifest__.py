@@ -45,7 +45,9 @@ more than once. All balances are computed sums over an immutable ledger
             "nn_fund_management/static/src/scss/fund_theme.scss",
         ],
     },
-    "demo": [],
+    "demo": [
+        "demo/demo_users.xml",
+    ],
     "application": True,
     "installable": True,
 }
