@@ -1,0 +1,10 @@
+.git
+.gitattributes
+.gitignore
+docs/
+*.pdf
+*.png
+*.jpg
+**/__pycache__/
+docker-compose.yml
+odoo.conf

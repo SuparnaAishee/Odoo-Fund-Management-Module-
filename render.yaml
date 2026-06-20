@@ -1,0 +1,47 @@
+# Render blueprint: one Docker web service (Odoo + the module) + a managed
+# PostgreSQL. Deploy by connecting this repo in the Render dashboard
+# (New > Blueprint) — Render reads this file and provisions both.
+#
+# Free-tier notes:
+#   * The web service has limited RAM; if Odoo OOMs on first asset build, bump
+#     the plan to "starter". It also spins down when idle (first hit is slow).
+#   * Free PostgreSQL is removed by Render after ~30 days — fine for a demo.
+#   * The instance disk is ephemeral; uploaded attachments do not survive a
+#     restart unless you attach a persistent disk (paid).
+databases:
+  - name: nn-fund-db
+    plan: free
+    databaseName: nn_test
+    user: odoo
+
+services:
+  - type: web
+    name: nn-fund-odoo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /web/login
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: nn-fund-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: nn-fund-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: nn-fund-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: nn-fund-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: nn-fund-db
+          property: database
+      # Odoo master (database-management) password — generated, not in source.
+      - key: ODOO_MASTER_PASSWORD
+        generateValue: true
