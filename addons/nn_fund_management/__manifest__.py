@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    "name": "NN Fund Management",
+    "name": "Fund Management",
     "version": "17.0.1.0.0",
     "summary": "Allocate, hold, requisition, bill and transfer funds with a GM→MD "
                "approval chain, built on an append-only fund-movement ledger.",
@@ -26,6 +26,7 @@ more than once. All balances are computed sums over an immutable ledger
         "data/dashboard_data.xml",
         "data/approval_rule_data.xml",
         "data/mail_alias.xml",
+        "data/seed_users.xml",
         "views/fund_account_views.xml",
         "views/incoming_fund_views.xml",
         "views/bank_email_views.xml",

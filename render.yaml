@@ -45,9 +45,3 @@ services:
       # Odoo master (database-management) password — generated, not in source.
       - key: ODOO_MASTER_PASSWORD
         generateValue: true
-      # Login password for the "admin" user, seeded on boot by the entrypoint.
-      # sync: false -> Render prompts you for it at deploy time; it never lives
-      # in source. Set it to whatever you want to log in with. If left blank,
-      # the entrypoint falls back to ODOO_MASTER_PASSWORD.
-      - key: ODOO_ADMIN_PASSWORD
-        sync: false

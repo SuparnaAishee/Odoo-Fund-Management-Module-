@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Production seed users: one login per role so the deployed instance is
+         testable end-to-end (Fund User -> Finance -> GM approve -> MD approve)
+         without demo data. Documented, fixed credentials by design — this is an
+         evaluation deployment. For a real production install, remove this file
+         from __manifest__.py (or change the passwords). All accounts share the
+         password 'Test@123'; the administrator uses 'Admin@123'.
+
+         Each user gets only its primary group; the implied-group chain
+         (Finance User -> Fund User -> Internal User, etc.) is added by Odoo,
+         per the hierarchy in security/groups.xml. -->
+
+    <record id="seed_user_fund" model="res.users">
+        <field name="name">Fund User</field>
+        <field name="login">fund@fund.test</field>
+        <field name="email">fund@fund.test</field>
+        <field name="password">Test@123</field>
+        <field name="groups_id" eval="[(4, ref('group_fund_user'))]"/>
+    </record>
+
+    <record id="seed_user_finance" model="res.users">
+        <field name="name">Finance User</field>
+        <field name="login">finance@fund.test</field>
+        <field name="email">finance@fund.test</field>
+        <field name="password">Test@123</field>
+        <field name="groups_id" eval="[(4, ref('group_finance_user'))]"/>
+    </record>
+
+    <record id="seed_user_gm" model="res.users">
+        <field name="name">GM Approver</field>
+        <field name="login">gm@fund.test</field>
+        <field name="email">gm@fund.test</field>
+        <field name="password">Test@123</field>
+        <field name="groups_id" eval="[(4, ref('group_gm_approver'))]"/>
+    </record>
+
+    <record id="seed_user_md" model="res.users">
+        <field name="name">MD Approver</field>
+        <field name="login">md@fund.test</field>
+        <field name="email">md@fund.test</field>
+        <field name="password">Test@123</field>
+        <field name="groups_id" eval="[(4, ref('group_md_approver'))]"/>
+    </record>
+
+    <!-- The built-in administrator already holds every fund role (incl. Fund
+         Administrator, GM and MD) via security/groups.xml, so this only fixes a
+         known login/password. -->
+    <record id="base.user_admin" model="res.users">
+        <field name="name">Administrator</field>
+        <field name="login">admin</field>
+        <field name="password">Admin@123</field>
+    </record>
+</odoo>
