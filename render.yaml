@@ -20,7 +20,10 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /web/login
+    # Lightweight health endpoint: returns JSON without rendering the login page
+    # or compiling web assets, so health checks don't cause memory spikes on the
+    # 512 MB free tier (/web/login would).
+    healthCheckPath: /web/health
     envVars:
       - key: DB_HOST
         fromDatabase:

@@ -1,7 +1,14 @@
 #!/bin/bash
-# Render entrypoint: write a production odoo.conf from environment variables,
-# then start Odoo bound to Render's $PORT. DB connection comes from the linked
-# Render PostgreSQL (see render.yaml); no credentials live in the source.
+# Render entrypoint tuned for the 512 MB FREE tier. DB connection comes from the
+# linked Render PostgreSQL (see render.yaml); no credentials live in the source.
+#
+# Why two phases? The install/upgrade of the module (24 modules, registry +
+# asset prep) is the memory-heavy part. Doing it in the SAME process that then
+# serves HTTP makes peak RAM spike past 512 MB and the free instance gets
+# OOM-killed -> "Exited with status 255" crash loop. So we run the one-off
+# install/upgrade in its own short-lived process (--stop-after-init); when it
+# exits, the OS reclaims all that memory BEFORE the long-running web server
+# starts lean.
 set -e
 
 CONF=/var/lib/odoo/odoo.conf
@@ -21,17 +28,22 @@ http_port = ${PORT:-8069}
 proxy_mode = True
 list_db = False
 admin_passwd = ${ODOO_MASTER_PASSWORD:-please-change-me}
-; Threaded mode keeps the memory footprint small enough for Render's free tier.
+; --- free-tier (512 MB) memory tuning ---
+; Threaded mode: no worker subprocesses, so the whole app is a single process.
 workers = 0
+; No background cron threads — saves memory/CPU; this app has no critical jobs.
+max_cron_threads = 0
 limit_time_real = 600
 limit_time_cpu = 300
 EOF
 
-# -i installs+initialises the module on the first boot (empty DB) and is a no-op
-# once installed, so the same command is safe on every restart. The seed users
-# (data/seed_users.xml) — admin + one login per role — are created on install
-# and refreshed on upgrade. Switch to ODOO_MODULE_OP=-u to apply code/data
-# changes (including new/updated seed users) after pushing.
+# One-off install/upgrade in its OWN process so its memory is freed before the
+# server starts. ODOO_MODULE_OP:
+#   -i  install on a fresh DB; a no-op once installed (default, lightest boot).
+#   -u  run for ONE deploy when you need to apply data changes (e.g. new seed
+#       users in data/seed_users.xml), then switch back to -i.
 MODULE_OP="${ODOO_MODULE_OP:--i}"
+odoo -c "$CONF" "${MODULE_OP}" nn_fund_management --without-demo=all --stop-after-init
 
-exec odoo -c "$CONF" "${MODULE_OP}" nn_fund_management --without-demo=all
+# Long-running web server, started lean (no install work competing for RAM).
+exec odoo -c "$CONF"
