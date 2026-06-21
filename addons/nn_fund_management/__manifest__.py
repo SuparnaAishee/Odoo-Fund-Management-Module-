@@ -27,6 +27,7 @@ more than once. All balances are computed sums over an immutable ledger
         "data/approval_rule_data.xml",
         "data/mail_alias.xml",
         "data/seed_users.xml",
+        "data/sample_data.xml",
         "views/fund_account_views.xml",
         "views/incoming_fund_views.xml",
         "views/bank_email_views.xml",

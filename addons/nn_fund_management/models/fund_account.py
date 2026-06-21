@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class FundAccount(models.Model):
@@ -72,3 +76,92 @@ class FundAccount(models.Model):
                 raise ValidationError(_(
                     "Account %s would have a negative on-hold balance.", account.name
                 ))
+
+    # ----------------------------------------------------------------- #
+    # Sample data
+    # ----------------------------------------------------------------- #
+    @api.model
+    def _seed_demo_data(self):
+        """Populate a fresh deployment with a small, realistic scenario so the
+        dashboard shows non-zero balances out of the box (the production install
+        runs --without-demo=all, so nothing transactional is loaded otherwise).
+
+        Idempotent: skips entirely once any fund account exists, and runs inside
+        a savepoint so a seeding error can never abort the module install/upgrade.
+        Called from data/sample_data.xml on install and upgrade.
+        """
+        if self.search_count([]):
+            return
+        try:
+            with self.env.cr.savepoint():
+                self._build_demo_data()
+            _logger.info("nn_fund_management: sample data seeded.")
+        except Exception as exc:  # never let seeding brick the deploy
+            _logger.warning("nn_fund_management: sample data skipped (%s)", exc)
+
+    @api.model
+    def _build_demo_data(self):
+        # Act as the administrator, who holds every fund role (Finance to confirm
+        # deposits, GM+MD to approve, Fund Administrator to self-approve).
+        admin = self.env.ref("base.user_admin")
+        env = self.env(user=admin.id)
+        company = admin.company_id or env.company
+        currency = company.currency_id
+
+        account = env["nn.fund.account"].create({
+            "name": "Main Operating Account", "code": "MAIN",
+            "account_type": "bank",
+            "company_id": company.id, "currency_id": currency.id,
+        })
+        proj_web = env["nn.project"].create({
+            "name": "Website Revamp", "code": "WEB",
+            "company_id": company.id, "currency_id": currency.id,
+        })
+        proj_app = env["nn.project"].create({
+            "name": "Mobile App", "code": "APP",
+            "company_id": company.id, "currency_id": currency.id,
+        })
+
+        # 1) Receive 1,000,000 into the account.
+        deposit = env["nn.incoming.fund"].create({
+            "fund_account_id": account.id, "amount": 1000000.0,
+            "transaction_reference": "SEED-DEP-001",
+            "sender": "NN Services HQ",
+        })
+        deposit.action_confirm()
+
+        def allocate(amount, project=None, head=None):
+            vals = {"fund_account_id": account.id, "amount": amount}
+            if project:
+                vals["project_id"] = project.id
+            if head:
+                vals["expense_head_id"] = head.id
+            alloc = env["nn.fund.allocation"].create(vals)
+            alloc.action_submit()
+            alloc.action_approve()  # GM
+            alloc.action_approve()  # MD
+            return alloc
+
+        head_salary = env.ref("nn_fund_management.expense_head_salary")
+        head_rent = env.ref("nn_fund_management.expense_head_office_rent")
+        head_mkt = env.ref("nn_fund_management.expense_head_marketing")
+
+        # 2) Allocate to projects and expense heads (leaves 120,000 unassigned).
+        allocate(400000.0, project=proj_web)
+        allocate(250000.0, project=proj_app)
+        allocate(150000.0, head=head_salary)
+        allocate(80000.0, head=head_rent)
+        allocate(80000.0, head=head_mkt)
+
+        # 3) Requisition + partial bill on Website Revamp, so it shows real
+        #    "spent" and a remaining hold on the dashboard.
+        req = env["nn.fund.requisition"].create({
+            "project_id": proj_web.id, "amount": 200000.0,
+        })
+        req.action_submit()
+        req.action_approve()  # GM
+        req.action_approve()  # MD
+        env["nn.fund.bill"].create({
+            "requisition_id": req.id, "amount": 120000.0,
+            "description": "Phase 1 vendor invoice",
+        }).action_post()
