@@ -61,8 +61,32 @@ docker compose run --rm odoo odoo -d nn_test -i nn_fund_management --stop-after-
 
 ## Login credentials
 
-Log in at http://localhost:8069 (database **`nn_test`**) with email + password.
-All demo accounts share the password **`admin123`**.
+### Live deployment
+
+The deployed instance runs **without demo data**, so it uses the production seed
+accounts from `addons/nn_fund_management/data/seed_users.xml`. The administrator
+logs in with the username **`admin`** (not an email); the role accounts use their
+email as the login.
+
+| Login | Password | Role |
+|---|---|---|
+| `admin` | `Admin@123` | Administrator — full backend, start here |
+| `finance@fund.test` | `Test@123` | Finance User — confirms incoming funds, sees all requests |
+| `fund@fund.test` | `Test@123` | Fund User — raises requests, sees only own |
+| `gm@fund.test` | `Test@123` | GM Approver — first-level approval |
+| `md@fund.test` | `Test@123` | MD Approver — final approval (posts the money effect) |
+
+Start as `admin`, open the **Fund Management** app from the apps menu. To walk the
+approval chain end-to-end: create a request as `fund@fund.test`, approve it as
+`gm@fund.test`, then finalize as `md@fund.test`.
+
+### Local demo
+
+When you run **locally with demo data** (the default `docker-compose` setup,
+database **`nn_test`**), the documented demo accounts from
+`addons/nn_fund_management/demo/demo_users.xml` are loaded instead. Log in at
+http://localhost:8069 with email + password; all demo accounts share the password
+**`admin123`**.
 
 | Email | Password | Role |
 |---|---|---|
@@ -71,11 +95,6 @@ All demo accounts share the password **`admin123`**.
 | `fund_demo@nn.test` | `admin123` | Fund User — raises requests, sees only own |
 | `gm_demo@nn.test` | `admin123` | GM Approver — first-level approval |
 | `md_demo@nn.test` | `admin123` | MD Approver — final approval (posts the money effect) |
-
-Start as `admin@nn.test`, open the **NN Fund Management** app from the apps menu.
-
-To walk the approval chain end-to-end: create a request as `fund_demo`, approve
-it as `gm_demo`, then finalize as `md_demo`.
 
 ## Testing instructions
 
