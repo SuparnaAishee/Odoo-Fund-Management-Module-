@@ -78,6 +78,40 @@ class FundAccount(models.Model):
                 ))
 
     # ----------------------------------------------------------------- #
+    # Currency
+    # ----------------------------------------------------------------- #
+    @api.model
+    def _setup_taka_currency(self):
+        """Make Bangladeshi Taka (৳) the company currency so every fund amount
+        shows in Taka rather than USD. Idempotent and self-guarded (a failure
+        can never abort the module install/upgrade). Called from
+        data/sample_data.xml before the sample data is seeded.
+        """
+        try:
+            with self.env.cr.savepoint():
+                bdt = self.env["res.currency"].with_context(active_test=False).search(
+                    [("name", "=", "BDT")], limit=1)
+                if not bdt:
+                    _logger.warning("nn_fund_management: BDT currency not found.")
+                    return
+                if not bdt.active:
+                    bdt.active = True
+                company = self.env.company
+                if company.currency_id == bdt:
+                    return
+                company.sudo().currency_id = bdt.id
+                # Re-point fund records created before the switch (the dashboard
+                # singleton and the seeded expense heads) to Taka.
+                for model in ("nn.fund.dashboard", "nn.expense.head", "nn.project",
+                              "nn.fund.account", "nn.fund.movement"):
+                    recs = self.env[model].sudo().with_context(active_test=False).search([])
+                    if recs:
+                        recs.write({"currency_id": bdt.id})
+                _logger.info("nn_fund_management: company currency set to BDT.")
+        except Exception as exc:  # never let currency setup brick the deploy
+            _logger.warning("nn_fund_management: taka currency setup skipped (%s)", exc)
+
+    # ----------------------------------------------------------------- #
     # Sample data
     # ----------------------------------------------------------------- #
     @api.model
